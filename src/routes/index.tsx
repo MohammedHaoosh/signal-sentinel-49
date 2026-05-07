@@ -702,6 +702,16 @@ function Dashboard() {
                         </div>
                       </div>
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        askAI(s);
+                      }}
+                      className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-300 transition hover:bg-sky-500/20"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Ask AI
+                    </button>
                   </div>
                 ))}
                 {stocks.length === 0 && (
