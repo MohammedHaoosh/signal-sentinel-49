@@ -181,6 +181,18 @@ function Dashboard() {
   const prevSignalsRef = useRef<Map<string, string>>(new Map());
   const weeklyInsightFn = useServerFn(weeklyInsight);
   const classifyFn = useServerFn(classifyHeadlines);
+  const explainSignalFn = useServerFn(explainSignal);
+  const marketSummaryFn = useServerFn(marketSummary);
+
+  // Ask AI modal
+  const [askStock, setAskStock] = useState<Stock | null>(null);
+  const [askText, setAskText] = useState<string>("");
+  const [askLoading, setAskLoading] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+
+  // Daily market summary banner
+  const [marketBrief, setMarketBrief] = useState<string | null>(null);
+  const [marketBriefLoading, setMarketBriefLoading] = useState(false);
 
   useEffect(() => {
     loadTheme();
