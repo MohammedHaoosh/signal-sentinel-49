@@ -114,14 +114,6 @@ function signalStyles(signal: Signal | "BUY" | "SELL") {
   }
 }
 
-function buildSeries(s: Stock) {
-  const { price, ma20, ma50 } = s;
-  const pts = [ma50, (ma50 + ma20) / 2, ma20, (ma20 + price) / 2, price];
-  return pts.map((p, i) => ({
-    day: `D-${4 - i}`,
-    price: Number(p.toFixed(2)),
-  }));
-}
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
