@@ -1,5 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -19,6 +40,24 @@ interface Stock {
 interface PendingTrade extends Stock {
   id: string;
   status: "pending" | "confirmed" | "rejected";
+  createdAt: number;
+}
+
+interface ConfirmedTrade {
+  id: string;
+  ticker: string;
+  entryPrice: number;
+  direction: "BUY" | "SELL";
+  timestamp: number;
+}
+
+interface HistoryEntry {
+  id: string;
+  time: number;
+  ticker: string;
+  price: number;
+  rsi: number;
+  signal: "BUY" | "SELL";
 }
 
 const API_URL = "https://unblessed-powwow-player.ngrok-free.dev/signals";
@@ -28,13 +67,11 @@ function rsiColor(rsi: number) {
   if (rsi > 70) return "text-rose-400";
   return "text-zinc-400";
 }
-
 function rsiDot(rsi: number) {
   if (rsi < 30) return "bg-emerald-400";
   if (rsi > 70) return "bg-rose-400";
   return "bg-zinc-500";
 }
-
 function signalStyles(signal: Signal) {
   switch (signal) {
     case "BUY":
@@ -46,12 +83,56 @@ function signalStyles(signal: Signal) {
   }
 }
 
+// Build a plausible 5-day close series from available data.
+function buildSeries(s: Stock) {
+  const { price, ma20, ma50 } = s;
+  const pts = [ma50, (ma50 + ma20) / 2, ma20, (ma20 + price) / 2, price];
+  return pts.map((p, i) => ({
+    day: `D-${4 - i}`,
+    price: Number(p.toFixed(2)),
+  }));
+}
+
+function Section({
+  title,
+  right,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  right?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-10">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <CollapsibleTrigger className="group flex items-center gap-2 text-left">
+          <ChevronDown
+            className={`h-4 w-4 text-zinc-500 transition-transform ${
+              open ? "" : "-rotate-90"
+            }`}
+          />
+          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+        </CollapsibleTrigger>
+        <div className="text-xs text-zinc-500">{right}</div>
+      </div>
+      <CollapsibleContent>{children}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 function Dashboard() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [pending, setPending] = useState<PendingTrade[]>([]);
+  const [confirmed, setConfirmed] = useState<ConfirmedTrade[]>([]);
+  const [rejectedCount, setRejectedCount] = useState(0);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [selected, setSelected] = useState<Stock | null>(null);
 
   const fetchSignals = useCallback(async () => {
     try {
@@ -62,19 +143,42 @@ function Dashboard() {
       const data: Stock[] = await res.json();
       setStocks(data);
       setError(null);
-      setLastUpdate(new Date());
+      const now = new Date();
+      setLastUpdate(now);
 
+      const actionable = data.filter(
+        (s) => s.signal === "BUY" || s.signal === "SELL",
+      );
+
+      // Append to pending if not already pending/confirmed for this ticker+signal recently
       setPending((prev) => {
-        const existingKeys = new Set(prev.map((p) => `${p.ticker}-${p.signal}`));
-        const newOnes: PendingTrade[] = data
-          .filter((s) => s.signal !== "NEUTRAL")
-          .filter((s) => !existingKeys.has(`${s.ticker}-${s.signal}`))
+        const activeKeys = new Set(
+          prev
+            .filter((p) => p.status === "pending")
+            .map((p) => `${p.ticker}-${p.signal}`),
+        );
+        const additions: PendingTrade[] = actionable
+          .filter((s) => !activeKeys.has(`${s.ticker}-${s.signal}`))
           .map((s) => ({
             ...s,
-            id: `${s.ticker}-${s.signal}-${Date.now()}`,
+            id: `${s.ticker}-${s.signal}-${now.getTime()}-${Math.random()}`,
             status: "pending" as const,
+            createdAt: now.getTime(),
           }));
-        return [...prev, ...newOnes];
+        return [...prev, ...additions];
+      });
+
+      // Append to history
+      setHistory((prev) => {
+        const additions: HistoryEntry[] = actionable.map((s) => ({
+          id: `${s.ticker}-${s.signal}-${now.getTime()}-${Math.random()}`,
+          time: now.getTime(),
+          ticker: s.ticker,
+          price: s.price,
+          rsi: s.rsi,
+          signal: s.signal as "BUY" | "SELL",
+        }));
+        return [...additions, ...prev].slice(0, 50);
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to fetch");
@@ -89,11 +193,47 @@ function Dashboard() {
     return () => clearInterval(id);
   }, [fetchSignals]);
 
+  const priceByTicker = useMemo(() => {
+    const m = new Map<string, number>();
+    stocks.forEach((s) => m.set(s.ticker, s.price));
+    return m;
+  }, [stocks]);
+
   const decide = (id: string, status: "confirmed" | "rejected") => {
-    setPending((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+    setPending((prev) => {
+      const trade = prev.find((p) => p.id === id);
+      if (trade && status === "confirmed") {
+        setConfirmed((c) => [
+          ...c,
+          {
+            id: trade.id,
+            ticker: trade.ticker,
+            entryPrice: trade.price,
+            direction: trade.signal as "BUY" | "SELL",
+            timestamp: Date.now(),
+          },
+        ]);
+      }
+      if (status === "rejected") setRejectedCount((n) => n + 1);
+      return prev.filter((p) => p.id !== id);
+    });
   };
 
   const visiblePending = pending.filter((p) => p.status === "pending");
+
+  const portfolio = useMemo(() => {
+    return confirmed.map((t) => {
+      const current = priceByTicker.get(t.ticker) ?? t.entryPrice;
+      const raw = ((current - t.entryPrice) / t.entryPrice) * 100;
+      const pnl = t.direction === "BUY" ? raw : -raw;
+      return { ...t, currentPrice: current, pnl };
+    });
+  }, [confirmed, priceByTicker]);
+
+  const totalPnl = useMemo(() => {
+    if (portfolio.length === 0) return 0;
+    return portfolio.reduce((s, p) => s + p.pnl, 0) / portfolio.length;
+  }, [portfolio]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -133,9 +273,10 @@ function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {stocks.map((s) => (
-              <article
+              <button
                 key={s.ticker}
-                className="group rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
+                onClick={() => setSelected(s)}
+                className="group rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -154,7 +295,6 @@ function Dashboard() {
                     {s.signal}
                   </span>
                 </div>
-
                 <div className="mt-5 space-y-2.5 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-500">RSI</span>
@@ -178,7 +318,7 @@ function Dashboard() {
                     </span>
                   </div>
                 </div>
-              </article>
+              </button>
             ))}
             {stocks.length === 0 && (
               <div className="text-zinc-500">No signals available.</div>
@@ -186,16 +326,19 @@ function Dashboard() {
           </div>
         )}
 
-        <section className="mt-12">
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="text-xl font-semibold tracking-tight">
-              Trade Approvals
-            </h2>
-            <span className="text-xs text-zinc-500">
-              {visiblePending.length} pending
+        {/* Trade Approvals */}
+        <Section
+          title="Trade Approvals"
+          right={
+            <span className="flex items-center gap-3">
+              <span>{visiblePending.length} pending</span>
+              <span className="text-emerald-400">
+                {confirmed.length} confirmed
+              </span>
+              <span className="text-rose-400">{rejectedCount} rejected</span>
             </span>
-          </div>
-
+          }
+        >
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/40">
             {visiblePending.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-zinc-500">
@@ -242,8 +385,212 @@ function Dashboard() {
               </ul>
             )}
           </div>
-        </section>
+        </Section>
+
+        {/* Signal History */}
+        <Section
+          title="Signal History"
+          right={<span>{history.length} / 50</span>}
+        >
+          <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
+            {history.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-zinc-500">
+                No signals logged yet.
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-900/60 text-xs uppercase tracking-wide text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Time</th>
+                    <th className="px-4 py-3 text-left font-medium">Ticker</th>
+                    <th className="px-4 py-3 text-right font-medium">Price</th>
+                    <th className="px-4 py-3 text-right font-medium">RSI</th>
+                    <th className="px-4 py-3 text-right font-medium">Signal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {history.map((h) => (
+                    <tr key={h.id}>
+                      <td className="px-4 py-2.5 text-zinc-400 font-mono text-xs">
+                        {new Date(h.time).toLocaleTimeString()}
+                      </td>
+                      <td className="px-4 py-2.5 font-semibold">{h.ticker}</td>
+                      <td className="px-4 py-2.5 text-right font-mono">
+                        ${h.price.toFixed(2)}
+                      </td>
+                      <td
+                        className={`px-4 py-2.5 text-right font-mono ${rsiColor(h.rsi)}`}
+                      >
+                        {h.rsi.toFixed(1)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-xs font-semibold ${signalStyles(h.signal)}`}
+                        >
+                          {h.signal}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </Section>
+
+        {/* Portfolio */}
+        <Section
+          title="Portfolio"
+          right={
+            <span
+              className={
+                totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
+              }
+            >
+              {portfolio.length > 0
+                ? `${totalPnl >= 0 ? "+" : ""}${totalPnl.toFixed(2)}% avg`
+                : "no positions"}
+            </span>
+          }
+        >
+          <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
+            {portfolio.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-zinc-500">
+                Confirm a trade to start tracking.
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-900/60 text-xs uppercase tracking-wide text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Ticker</th>
+                    <th className="px-4 py-3 text-left font-medium">Side</th>
+                    <th className="px-4 py-3 text-right font-medium">Entry</th>
+                    <th className="px-4 py-3 text-right font-medium">Current</th>
+                    <th className="px-4 py-3 text-right font-medium">P/L</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {portfolio.map((p) => (
+                    <tr key={p.id}>
+                      <td className="px-4 py-2.5 font-semibold">{p.ticker}</td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-xs font-semibold ${signalStyles(p.direction)}`}
+                        >
+                          {p.direction}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono text-zinc-300">
+                        ${p.entryPrice.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono text-zinc-300">
+                        ${p.currentPrice.toFixed(2)}
+                      </td>
+                      <td
+                        className={`px-4 py-2.5 text-right font-mono font-semibold ${
+                          p.pnl >= 0 ? "text-emerald-400" : "text-rose-400"
+                        }`}
+                      >
+                        {p.pnl >= 0 ? "+" : ""}
+                        {p.pnl.toFixed(2)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </Section>
       </div>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-2xl">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between gap-4">
+                  <span>{selected.ticker}</span>
+                  <span
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${signalStyles(selected.signal)}`}
+                  >
+                    {selected.signal}
+                  </span>
+                </DialogTitle>
+                <p className="text-sm text-zinc-400 font-mono">
+                  ${selected.price.toFixed(2)} · 5-day close
+                </p>
+              </DialogHeader>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={buildSeries(selected)}
+                    margin={{ top: 10, right: 16, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      stroke="#27272a"
+                      strokeDasharray="3 3"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="day"
+                      stroke="#71717a"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#71717a"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      domain={["auto", "auto"]}
+                      tickFormatter={(v) => `$${v}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "#09090b",
+                        border: "1px solid #27272a",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      labelStyle={{ color: "#a1a1aa" }}
+                      formatter={(v: number) => [`$${v.toFixed(2)}`, "Price"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#34d399"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: "#34d399" }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                  <div className="text-xs text-zinc-500">RSI</div>
+                  <div className={`mt-1 font-mono ${rsiColor(selected.rsi)}`}>
+                    {selected.rsi.toFixed(1)}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                  <div className="text-xs text-zinc-500">MA20</div>
+                  <div className="mt-1 font-mono text-zinc-300">
+                    ${selected.ma20.toFixed(2)}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                  <div className="text-xs text-zinc-500">MA50</div>
+                  <div className="mt-1 font-mono text-zinc-300">
+                    ${selected.ma50.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
