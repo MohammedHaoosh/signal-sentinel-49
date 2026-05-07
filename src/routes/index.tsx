@@ -27,6 +27,7 @@ import Backtest from "@/components/Backtest";
 import Correlations from "@/components/Correlations";
 import Risk from "@/components/Risk";
 import Scanner from "@/components/Scanner";
+import Analytics from "@/components/Analytics";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
@@ -400,6 +401,7 @@ function Dashboard() {
               <TabsTrigger value="correlations">Correlations</TabsTrigger>
               <TabsTrigger value="risk">Risk</TabsTrigger>
               <TabsTrigger value="scanner">Scanner</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
           </div>
 
@@ -963,6 +965,17 @@ function Dashboard() {
                   },
                 ]);
               }}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="analytics"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Analytics
+              confirmed={confirmed}
+              rejectedCount={rejectedCount}
+              history={history}
             />
           </TabsContent>
         </Tabs>
