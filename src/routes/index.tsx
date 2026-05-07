@@ -173,6 +173,7 @@ function Dashboard() {
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
+  const [activeTab, setActiveTab] = useState("signals");
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
@@ -497,7 +498,7 @@ function Dashboard() {
           </div>
         )}
 
-        <Tabs defaultValue="signals" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="sticky top-0 z-30 -mx-6 mb-6 border-b border-zinc-800/80 bg-zinc-950/85 px-6 py-3 backdrop-blur">
             <TabsList className="bg-zinc-900/80 ring-1 ring-zinc-800">
               <TabsTrigger value="signals">Signals</TabsTrigger>
@@ -1169,6 +1170,7 @@ function Dashboard() {
         totalPnl={totalPnl}
         pendingCount={visiblePending.length}
         confirmedCount={confirmed.length}
+        onOpenCoach={() => setActiveTab("coach")}
       />
     </div>
   );

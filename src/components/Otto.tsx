@@ -4,9 +4,10 @@ interface Props {
   totalPnl: number;
   pendingCount: number;
   confirmedCount: number;
+  onOpenCoach?: () => void;
 }
 
-export default function Otto({ totalPnl, pendingCount, confirmedCount }: Props) {
+export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoach }: Props) {
   const mood: "happy" | "neutral" | "sad" =
     totalPnl > 1 ? "happy" : totalPnl < -1 ? "sad" : "neutral";
 
@@ -52,11 +53,12 @@ export default function Otto({ totalPnl, pendingCount, confirmedCount }: Props) 
         </div>
       )}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => onOpenCoach?.()}
         onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
         className="group relative grid h-14 w-14 place-items-center rounded-full border-2 bg-zinc-900 shadow-xl transition hover:scale-105"
         style={{ borderColor: moodColor }}
-        aria-label="Otto the trading bot"
+        aria-label="Open Otto the trading coach"
       >
         <svg viewBox="0 0 64 64" className="h-10 w-10">
           <circle cx="32" cy="32" r="26" fill="#18181b" stroke={moodColor} strokeWidth="2" />
