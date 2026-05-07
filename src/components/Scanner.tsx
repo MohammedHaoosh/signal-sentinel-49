@@ -315,7 +315,7 @@ export default function Scanner({ onSendToApprovals }: Props) {
                           rsi: r.rsi,
                           ma20: r.ma20,
                           ma50: r.ma50,
-                          signal: r.bias,
+                          signal: r.bias as "BUY" | "SELL",
                         })
                       }
                     >
