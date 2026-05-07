@@ -25,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Glossary from "@/components/Glossary";
 import Backtest from "@/components/Backtest";
 import Correlations from "@/components/Correlations";
+import Risk from "@/components/Risk";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
@@ -396,6 +397,7 @@ function Dashboard() {
               <TabsTrigger value="glossary">Glossary</TabsTrigger>
               <TabsTrigger value="backtest">Backtest</TabsTrigger>
               <TabsTrigger value="correlations">Correlations</TabsTrigger>
+              <TabsTrigger value="risk">Risk</TabsTrigger>
             </TabsList>
           </div>
 
@@ -929,6 +931,13 @@ function Dashboard() {
             className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
           >
             <Correlations />
+          </TabsContent>
+
+          <TabsContent
+            value="risk"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Risk />
           </TabsContent>
         </Tabs>
       </div>
