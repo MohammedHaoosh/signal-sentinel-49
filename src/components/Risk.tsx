@@ -343,11 +343,11 @@ export default function Risk() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Stop Loss</span>
-                      <span className="font-mono text-red-400">${stopL.toFixed(2)}</span>
+                      <span className="font-mono text-red-300">${stopL.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Take Profit</span>
-                      <span className="font-mono text-emerald-400">${tp.toFixed(2)}</span>
+                      <span className="font-mono text-emerald-300">${tp.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between border-t border-border/30 pt-1.5 mt-1.5">
                       <span className="text-muted-foreground">Size ($1k risk 1%)</span>
