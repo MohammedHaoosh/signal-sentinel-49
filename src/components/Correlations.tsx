@@ -243,11 +243,8 @@ export default function Correlations() {
                 </div>
               ))}
               {ordered.map((row, i) => (
-                <>
-                  <div
-                    key={`r-${row.ticker}`}
-                    className="text-xs font-semibold text-muted-foreground flex items-center justify-end pr-2"
-                  >
+                <Fragment key={`row-${row.ticker}`}>
+                  <div className="text-xs font-semibold text-muted-foreground flex items-center justify-end pr-2">
                     {row.ticker}
                   </div>
                   {ordered.map((col, j) => {
@@ -271,7 +268,7 @@ export default function Correlations() {
                       </div>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </div>
           </div>
