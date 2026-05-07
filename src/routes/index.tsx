@@ -40,6 +40,7 @@ import {
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
 import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
 import { weeklyInsight } from "@/lib/coach.functions";
+import { explainSignal, marketSummary } from "@/lib/ai.functions";
 import { detectPatterns } from "@/lib/patterns";
 import { sounds, setSoundEnabled, loadSoundPref } from "@/lib/sounds";
 
@@ -180,6 +181,18 @@ function Dashboard() {
   const prevSignalsRef = useRef<Map<string, string>>(new Map());
   const weeklyInsightFn = useServerFn(weeklyInsight);
   const classifyFn = useServerFn(classifyHeadlines);
+  const explainSignalFn = useServerFn(explainSignal);
+  const marketSummaryFn = useServerFn(marketSummary);
+
+  // Ask AI modal
+  const [askStock, setAskStock] = useState<Stock | null>(null);
+  const [askText, setAskText] = useState<string>("");
+  const [askLoading, setAskLoading] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+
+  // Daily market summary banner
+  const [marketBrief, setMarketBrief] = useState<string | null>(null);
+  const [marketBriefLoading, setMarketBriefLoading] = useState(false);
 
   useEffect(() => {
     loadTheme();
@@ -440,6 +453,68 @@ function Dashboard() {
       .finally(() => setInsightLoading(false));
   }, [confirmed.length, rejectedCount, stocks.length, weeklyInsightFn, history, totalPnl]);
 
+  // Daily market summary (refresh every 30 min)
+  const loadMarketBrief = useCallback(() => {
+    if (stocks.length === 0) return;
+    setMarketBriefLoading(true);
+    marketSummaryFn({
+      data: {
+        stocks: stocks.map((s) => ({
+          ticker: s.ticker,
+          price: s.price,
+          rsi: s.rsi,
+          ma20: s.ma20,
+          signal: s.signal,
+        })),
+      },
+    })
+      .then((res) => {
+        if (res.summary) setMarketBrief(res.summary);
+      })
+      .catch(() => {})
+      .finally(() => setMarketBriefLoading(false));
+  }, [stocks, marketSummaryFn]);
+
+  const lastBriefAt = useRef(0);
+  useEffect(() => {
+    if (stocks.length === 0) return;
+    const now = Date.now();
+    if (marketBrief && now - lastBriefAt.current < 30 * 60_000) return;
+    lastBriefAt.current = now;
+    loadMarketBrief();
+    const id = setInterval(() => {
+      lastBriefAt.current = Date.now();
+      loadMarketBrief();
+    }, 30 * 60_000);
+    return () => clearInterval(id);
+  }, [stocks.length, loadMarketBrief, marketBrief]);
+
+  const askAI = useCallback(
+    (s: Stock) => {
+      setAskStock(s);
+      setAskText("");
+      setAskError(null);
+      setAskLoading(true);
+      explainSignalFn({
+        data: {
+          ticker: s.ticker,
+          price: s.price,
+          rsi: s.rsi,
+          ma20: s.ma20,
+          ma50: s.ma50,
+          signal: s.signal,
+        },
+      })
+        .then((res) => {
+          if (res.error) setAskError(res.error);
+          else setAskText(res.explanation);
+        })
+        .catch((e) => setAskError(e instanceof Error ? e.message : "Failed"))
+        .finally(() => setAskLoading(false));
+    },
+    [explainSignalFn],
+  );
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -483,6 +558,29 @@ function Dashboard() {
             <ThemeSwitcher />
           </div>
         </header>
+
+        {(marketBrief || marketBriefLoading) && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 to-zinc-900/40 p-4">
+            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-400" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-400">
+                  AI Daily Market Brief
+                </div>
+                <button
+                  onClick={loadMarketBrief}
+                  disabled={marketBriefLoading}
+                  className="text-[10px] uppercase tracking-wide text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
+                >
+                  {marketBriefLoading ? "Refreshing…" : "Refresh"}
+                </button>
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {marketBrief ?? "Analyzing today's market…"}
+              </div>
+            </div>
+          </div>
+        )}
 
         {(insight || insightLoading) && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-zinc-900/40 p-4">
@@ -603,6 +701,16 @@ function Dashboard() {
                           </span>
                         </div>
                       </div>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        askAI(s);
+                      }}
+                      className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-300 transition hover:bg-sky-500/20"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Ask AI
                     </button>
                   </div>
                 ))}
@@ -829,6 +937,14 @@ function Dashboard() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredNews.map((a) => {
                 const tags = findHotTags(`${a.title} ${a.description ?? ""}`);
+                const sent = sentiment.get(a.url);
+                const sentStyles = sent
+                  ? sent.label === "bullish"
+                    ? "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30"
+                    : sent.label === "bearish"
+                      ? "bg-rose-500/15 text-rose-400 ring-rose-500/30"
+                      : "bg-zinc-700/40 text-zinc-300 ring-zinc-600/40"
+                  : "";
                 return (
                   <a
                     key={a.url}
@@ -841,6 +957,14 @@ function Dashboard() {
                       <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-zinc-300">
                         {a.ticker}
                       </span>
+                      {sent && (
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${sentStyles}`}
+                          title={`AI sentiment confidence ${Math.round(sent.label === "bearish" ? 100 - sent.score : sent.score)}%`}
+                        >
+                          {sent.label} · {Math.round(sent.label === "bearish" ? 100 - sent.score : sent.score)}%
+                        </span>
+                      )}
                       {tags.map((t) => (
                         <span
                           key={t}
@@ -1116,6 +1240,35 @@ function Dashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!askStock} onOpenChange={(o) => !o && setAskStock(null)}>
+        <DialogContent className="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-lg">
+          {askStock && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-sky-400" />
+                  AI Signal Explainer · {askStock.ticker}
+                </DialogTitle>
+                <p className="text-xs text-zinc-500 font-mono">
+                  ${askStock.price.toFixed(2)} · RSI {askStock.rsi.toFixed(1)} · {askStock.signal}
+                </p>
+              </DialogHeader>
+              <div className="mt-2 min-h-[120px] text-sm leading-relaxed text-zinc-200">
+                {askLoading && <div className="text-zinc-500">Otto is thinking…</div>}
+                {askError && (
+                  <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-300">
+                    {askError}
+                  </div>
+                )}
+                {!askLoading && !askError && askText && (
+                  <div className="whitespace-pre-wrap">{askText}</div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-2xl">
