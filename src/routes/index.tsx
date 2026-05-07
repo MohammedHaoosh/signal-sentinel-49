@@ -517,6 +517,10 @@ function Dashboard() {
               <TabsTrigger value="risk">Risk</TabsTrigger>
               <TabsTrigger value="scanner">Scanner</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="coach">
+                <Sparkles className="mr-1 h-3 w-3" />
+                Coach
+              </TabsTrigger>
             </TabsList>
           </div>
 
