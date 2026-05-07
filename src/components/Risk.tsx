@@ -65,9 +65,9 @@ function volatility(ticker: string, price: number): number {
 }
 
 function volBucket(v: number) {
-  if (v < 1.5) return { label: "LOW", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" };
-  if (v < 2.5) return { label: "MEDIUM", cls: "bg-amber-500/20 text-amber-400 border-amber-500/40" };
-  return { label: "HIGH", cls: "bg-red-500/20 text-red-400 border-red-500/40" };
+  if (v < 1.5) return { label: "LOW", cls: "bg-emerald-500/30 text-emerald-200 border-emerald-400/60" };
+  if (v < 2.5) return { label: "MEDIUM", cls: "bg-amber-500/30 text-amber-200 border-amber-400/60" };
+  return { label: "HIGH", cls: "bg-red-500/30 text-red-200 border-red-400/60" };
 }
 
 export default function Risk() {
