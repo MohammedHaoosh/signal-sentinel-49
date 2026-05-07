@@ -21,7 +21,7 @@ interface PendingTrade extends Stock {
   status: "pending" | "confirmed" | "rejected";
 }
 
-const API_URL = "http://localhost:5000/signals";
+const API_URL = "https://unblessed-powwow-player.ngrok-free.dev/signals";
 
 function rsiColor(rsi: number) {
   if (rsi < 30) return "text-emerald-400";
