@@ -26,6 +26,7 @@ import Glossary from "@/components/Glossary";
 import Backtest from "@/components/Backtest";
 import Correlations from "@/components/Correlations";
 import Risk from "@/components/Risk";
+import Scanner from "@/components/Scanner";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
@@ -398,6 +399,7 @@ function Dashboard() {
               <TabsTrigger value="backtest">Backtest</TabsTrigger>
               <TabsTrigger value="correlations">Correlations</TabsTrigger>
               <TabsTrigger value="risk">Risk</TabsTrigger>
+              <TabsTrigger value="scanner">Scanner</TabsTrigger>
             </TabsList>
           </div>
 
@@ -938,6 +940,30 @@ function Dashboard() {
             className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
           >
             <Risk />
+          </TabsContent>
+
+          <TabsContent
+            value="scanner"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Scanner
+              onSendToApprovals={(s) => {
+                setPending((prev) => [
+                  ...prev,
+                  {
+                    ticker: s.ticker,
+                    price: s.price,
+                    rsi: s.rsi,
+                    ma20: s.ma20,
+                    ma50: s.ma50,
+                    signal: s.signal,
+                    id: `${s.ticker}-${s.signal}-${Date.now()}-${Math.random()}`,
+                    status: "pending",
+                    createdAt: Date.now(),
+                  },
+                ]);
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
