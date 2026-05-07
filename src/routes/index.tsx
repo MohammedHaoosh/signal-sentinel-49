@@ -941,6 +941,30 @@ function Dashboard() {
           >
             <Risk />
           </TabsContent>
+
+          <TabsContent
+            value="scanner"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Scanner
+              onSendToApprovals={(s) => {
+                setPending((prev) => [
+                  ...prev,
+                  {
+                    ticker: s.ticker,
+                    price: s.price,
+                    rsi: s.rsi,
+                    ma20: s.ma20,
+                    ma50: s.ma50,
+                    signal: s.signal,
+                    id: `${s.ticker}-${s.signal}-${Date.now()}-${Math.random()}`,
+                    status: "pending",
+                    createdAt: Date.now(),
+                  },
+                ]);
+              }}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
