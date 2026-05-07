@@ -453,6 +453,68 @@ function Dashboard() {
       .finally(() => setInsightLoading(false));
   }, [confirmed.length, rejectedCount, stocks.length, weeklyInsightFn, history, totalPnl]);
 
+  // Daily market summary (refresh every 30 min)
+  const loadMarketBrief = useCallback(() => {
+    if (stocks.length === 0) return;
+    setMarketBriefLoading(true);
+    marketSummaryFn({
+      data: {
+        stocks: stocks.map((s) => ({
+          ticker: s.ticker,
+          price: s.price,
+          rsi: s.rsi,
+          ma20: s.ma20,
+          signal: s.signal,
+        })),
+      },
+    })
+      .then((res) => {
+        if (res.summary) setMarketBrief(res.summary);
+      })
+      .catch(() => {})
+      .finally(() => setMarketBriefLoading(false));
+  }, [stocks, marketSummaryFn]);
+
+  const lastBriefAt = useRef(0);
+  useEffect(() => {
+    if (stocks.length === 0) return;
+    const now = Date.now();
+    if (marketBrief && now - lastBriefAt.current < 30 * 60_000) return;
+    lastBriefAt.current = now;
+    loadMarketBrief();
+    const id = setInterval(() => {
+      lastBriefAt.current = Date.now();
+      loadMarketBrief();
+    }, 30 * 60_000);
+    return () => clearInterval(id);
+  }, [stocks.length, loadMarketBrief, marketBrief]);
+
+  const askAI = useCallback(
+    (s: Stock) => {
+      setAskStock(s);
+      setAskText("");
+      setAskError(null);
+      setAskLoading(true);
+      explainSignalFn({
+        data: {
+          ticker: s.ticker,
+          price: s.price,
+          rsi: s.rsi,
+          ma20: s.ma20,
+          ma50: s.ma50,
+          signal: s.signal,
+        },
+      })
+        .then((res) => {
+          if (res.error) setAskError(res.error);
+          else setAskText(res.explanation);
+        })
+        .catch((e) => setAskError(e instanceof Error ? e.message : "Failed"))
+        .finally(() => setAskLoading(false));
+    },
+    [explainSignalFn],
+  );
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
