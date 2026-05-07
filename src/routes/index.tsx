@@ -1165,6 +1165,11 @@ function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+      <Otto
+        totalPnl={totalPnl}
+        pendingCount={visiblePending.length}
+        confirmedCount={confirmed.length}
+      />
     </div>
   );
 }
