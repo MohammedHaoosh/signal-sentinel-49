@@ -171,6 +171,20 @@ function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selected, setSelected] = useState<Stock | null>(null);
 
+  // Sound + theme + AI features
+  const [soundOn, setSoundOn] = useState(true);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
+  const prevSignalsRef = useRef<Map<string, string>>(new Map());
+  const weeklyInsightFn = useServerFn(weeklyInsight);
+  const classifyFn = useServerFn(classifyHeadlines);
+
+  useEffect(() => {
+    loadTheme();
+    setSoundOn(loadSoundPref());
+  }, []);
+
   // News
   const fetchNewsFn = useServerFn(fetchNews);
   const [news, setNews] = useState<NewsArticle[]>([]);
