@@ -25,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Glossary from "@/components/Glossary";
 import Backtest from "@/components/Backtest";
 import Correlations from "@/components/Correlations";
+import Risk from "@/components/Risk";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
