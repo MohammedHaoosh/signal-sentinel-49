@@ -920,6 +920,7 @@ function Dashboard() {
                 subtitle="Price at or below MA20"
                 accent="rose"
                 stocks={trendingDown}
+              />
             </div>
             <div className="mt-6">
               <CompareChart stocks={stocks} />
