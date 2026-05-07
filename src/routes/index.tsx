@@ -391,6 +391,7 @@ function Dashboard() {
                   </span>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="glossary">Glossary</TabsTrigger>
             </TabsList>
           </div>
 
