@@ -905,6 +905,13 @@ function Dashboard() {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent
+            value="glossary"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Glossary />
+          </TabsContent>
         </Tabs>
       </div>
 
