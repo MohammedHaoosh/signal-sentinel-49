@@ -1,15 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import confetti from "canvas-confetti";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +20,28 @@ import Correlations from "@/components/Correlations";
 import Risk from "@/components/Risk";
 import Scanner from "@/components/Scanner";
 import Analytics from "@/components/Analytics";
+import Coach from "@/components/Coach";
+import CandleChart from "@/components/CandleChart";
+import CompareChart from "@/components/CompareChart";
+import TickerTape from "@/components/TickerTape";
+import Otto from "@/components/Otto";
+import ThemeSwitcher, { loadTheme } from "@/components/ThemeSwitcher";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  Star,
+  StarOff,
+  ExternalLink,
+  Plus,
+  Volume2,
+  VolumeX,
+  Sparkles,
+} from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
+import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
+import { weeklyInsight } from "@/lib/coach.functions";
+import { detectPatterns } from "@/lib/patterns";
+import { sounds, setSoundEnabled, loadSoundPref } from "@/lib/sounds";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
