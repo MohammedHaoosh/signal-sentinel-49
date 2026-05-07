@@ -369,12 +369,12 @@ export default function Risk() {
             const v = volatility(s.ticker, s.price);
             const b = volBucket(v);
             return (
-              <div key={s.ticker} className="p-3 rounded-lg bg-muted/20 border border-border/30 flex items-center justify-between">
+              <div key={s.ticker} className="p-3 rounded-lg bg-muted/30 border border-border/60 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{s.ticker}</div>
+                  <div className="font-semibold text-foreground">{s.ticker}</div>
                   <div className="text-xs text-muted-foreground">{v.toFixed(2)}% avg swing</div>
                   {b.label === "HIGH" && (
-                    <div className="text-[10px] text-red-400 mt-0.5">⚠ Use smaller size</div>
+                    <div className="text-[10px] text-red-300 mt-0.5">⚠ Use smaller size</div>
                   )}
                 </div>
                 <Badge className={`border ${b.cls}`} variant="outline">{b.label}</Badge>
