@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   totalPnl: number;
@@ -23,17 +23,29 @@ export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoa
   const [open, setOpen] = useState(false);
   const [bubble, setBubble] = useState<string | null>(null);
 
-  // brief popup whenever pending count increases
-  const [lastPending, setLastPending] = useState(pendingCount);
+  // brief popup whenever pending count increases; clear when it drops
+  const lastPendingRef = useRef(pendingCount);
+  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (pendingCount > lastPending) {
-      setBubble(`New signal! ${pendingCount - lastPending} fresh setup${pendingCount - lastPending > 1 ? "s" : ""}.`);
-      const t = setTimeout(() => setBubble(null), 4000);
-      setLastPending(pendingCount);
-      return () => clearTimeout(t);
+    const prev = lastPendingRef.current;
+    lastPendingRef.current = pendingCount;
+    if (pendingCount > prev) {
+      const diff = pendingCount - prev;
+      setBubble(`New signal! ${diff} fresh setup${diff > 1 ? "s" : ""}.`);
+      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+      bubbleTimerRef.current = setTimeout(() => setBubble(null), 4000);
+    } else if (pendingCount < prev) {
+      // user approved/rejected — drop the stale bubble immediately
+      if (bubbleTimerRef.current) {
+        clearTimeout(bubbleTimerRef.current);
+        bubbleTimerRef.current = null;
+      }
+      setBubble(null);
     }
-    setLastPending(pendingCount);
-  }, [pendingCount, lastPending]);
+  }, [pendingCount]);
+  useEffect(() => () => {
+    if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+  }, []);
 
   const eyeY = mood === "sad" ? 30 : mood === "happy" ? 26 : 28;
   const mouthPath =
