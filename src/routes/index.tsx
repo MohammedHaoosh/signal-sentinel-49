@@ -802,7 +802,7 @@ function Dashboard() {
               >
                 All
               </button>
-              {TRACKED.map((t) => (
+              {[...TRACKED, "MARKET"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setNewsFilter(t)}
