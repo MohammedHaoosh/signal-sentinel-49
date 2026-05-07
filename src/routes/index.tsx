@@ -967,6 +967,17 @@ function Dashboard() {
               }}
             />
           </TabsContent>
+
+          <TabsContent
+            value="analytics"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Analytics
+              confirmed={confirmed}
+              rejectedCount={rejectedCount}
+              history={history}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
