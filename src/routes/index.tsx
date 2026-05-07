@@ -1170,6 +1170,7 @@ function Dashboard() {
         totalPnl={totalPnl}
         pendingCount={visiblePending.length}
         confirmedCount={confirmed.length}
+        onOpenCoach={() => setActiveTab("coach")}
       />
     </div>
   );
