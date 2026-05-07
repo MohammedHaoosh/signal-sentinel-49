@@ -65,9 +65,9 @@ function volatility(ticker: string, price: number): number {
 }
 
 function volBucket(v: number) {
-  if (v < 1.5) return { label: "LOW", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" };
-  if (v < 2.5) return { label: "MEDIUM", cls: "bg-amber-500/20 text-amber-400 border-amber-500/40" };
-  return { label: "HIGH", cls: "bg-red-500/20 text-red-400 border-red-500/40" };
+  if (v < 1.5) return { label: "LOW", cls: "bg-emerald-500/30 text-emerald-200 border-emerald-400/60" };
+  if (v < 2.5) return { label: "MEDIUM", cls: "bg-amber-500/30 text-amber-200 border-amber-400/60" };
+  return { label: "HIGH", cls: "bg-red-500/30 text-red-200 border-red-400/60" };
 }
 
 export default function Risk() {
@@ -220,25 +220,25 @@ export default function Risk() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Card className="p-4 bg-muted/20 border-border/40">
+            <Card className="p-4 bg-muted/30 border-border/60">
               <div className="text-xs text-muted-foreground">Recommended Shares</div>
-              <div className="text-2xl font-bold mt-1">{calc.shares}</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{calc.shares}</div>
             </Card>
-            <Card className="p-4 bg-muted/20 border-border/40">
+            <Card className="p-4 bg-muted/30 border-border/60">
               <div className="text-xs text-muted-foreground">Position Size ($)</div>
-              <div className="text-2xl font-bold mt-1">
+              <div className="text-2xl font-bold mt-1 text-foreground">
                 ${calc.positionDollars.toFixed(2)}
               </div>
             </Card>
-            <Card className="p-4 bg-red-500/10 border-red-500/30">
-              <div className="text-xs text-muted-foreground">Max Loss</div>
-              <div className="text-2xl font-bold mt-1 text-red-400">
+            <Card className="p-4 bg-red-500/15 border-red-400/50">
+              <div className="text-xs text-red-200/80">Max Loss</div>
+              <div className="text-2xl font-bold mt-1 text-red-200">
                 ${calc.maxLoss.toFixed(2)}
               </div>
             </Card>
-            <Card className="p-4 bg-emerald-500/10 border-emerald-500/30">
-              <div className="text-xs text-muted-foreground">Risk:Reward</div>
-              <div className="text-2xl font-bold mt-1 text-emerald-400">
+            <Card className="p-4 bg-emerald-500/15 border-emerald-400/50">
+              <div className="text-xs text-emerald-200/80">Risk:Reward</div>
+              <div className="text-2xl font-bold mt-1 text-emerald-200">
                 1:{calc.rr}
               </div>
             </Card>
@@ -250,7 +250,7 @@ export default function Risk() {
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-6 bg-card/60 backdrop-blur border-border/50">
           <h3 className="text-lg font-semibold mb-3">Daily P/L Tracker</h3>
-          <div className={`text-4xl font-bold ${dailyPL >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          <div className={`text-4xl font-bold ${dailyPL >= 0 ? "text-emerald-300" : "text-red-300"}`}>
             {dailyPL >= 0 ? "+" : ""}${dailyPL.toFixed(2)}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
@@ -300,7 +300,7 @@ export default function Risk() {
             ))}
           </div>
           {overexposed.length > 0 && (
-            <div className="mt-3 text-xs text-amber-400 text-center">
+            <div className="mt-3 text-xs text-amber-300 text-center">
               ⚠️ Overexposed: {overexposed.map((s) => s.name).join(", ")} (&gt;40%)
             </div>
           )}
@@ -343,11 +343,11 @@ export default function Risk() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Stop Loss</span>
-                      <span className="font-mono text-red-400">${stopL.toFixed(2)}</span>
+                      <span className="font-mono text-red-300">${stopL.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Take Profit</span>
-                      <span className="font-mono text-emerald-400">${tp.toFixed(2)}</span>
+                      <span className="font-mono text-emerald-300">${tp.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between border-t border-border/30 pt-1.5 mt-1.5">
                       <span className="text-muted-foreground">Size ($1k risk 1%)</span>
@@ -369,12 +369,12 @@ export default function Risk() {
             const v = volatility(s.ticker, s.price);
             const b = volBucket(v);
             return (
-              <div key={s.ticker} className="p-3 rounded-lg bg-muted/20 border border-border/30 flex items-center justify-between">
+              <div key={s.ticker} className="p-3 rounded-lg bg-muted/30 border border-border/60 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{s.ticker}</div>
+                  <div className="font-semibold text-foreground">{s.ticker}</div>
                   <div className="text-xs text-muted-foreground">{v.toFixed(2)}% avg swing</div>
                   {b.label === "HIGH" && (
-                    <div className="text-[10px] text-red-400 mt-0.5">⚠ Use smaller size</div>
+                    <div className="text-[10px] text-red-300 mt-0.5">⚠ Use smaller size</div>
                   )}
                 </div>
                 <Badge className={`border ${b.cls}`} variant="outline">{b.label}</Badge>
