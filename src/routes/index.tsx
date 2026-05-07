@@ -914,6 +914,13 @@ function Dashboard() {
           >
             <Glossary />
           </TabsContent>
+
+          <TabsContent
+            value="backtest"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Backtest />
+          </TabsContent>
         </Tabs>
       </div>
 
