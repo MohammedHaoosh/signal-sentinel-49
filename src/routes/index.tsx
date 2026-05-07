@@ -26,6 +26,7 @@ import Glossary from "@/components/Glossary";
 import Backtest from "@/components/Backtest";
 import Correlations from "@/components/Correlations";
 import Risk from "@/components/Risk";
+import Scanner from "@/components/Scanner";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
