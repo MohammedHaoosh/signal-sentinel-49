@@ -132,6 +132,83 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/* === Theme variants applied via [data-theme] on <html> ===
+   Midnight is the default zinc-based dark theme used in all components. */
+:root[data-theme="bloomberg"] {
+  color-scheme: dark;
+  --bg-app: #0a0a0a;
+  --text-app: #fcd34d;
+  --accent-app: #fbbf24;
+  --font-app: ui-monospace, "JetBrains Mono", Menlo, monospace;
+}
+:root[data-theme="mint"] {
+  color-scheme: light;
+  --bg-app: #f5fdf9;
+  --text-app: #0f3a26;
+  --accent-app: #059669;
+  --font-app: ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-theme="bloomberg"] body {
+  background-color: var(--bg-app) !important;
+  color: var(--text-app);
+  font-family: var(--font-app);
+}
+:root[data-theme="bloomberg"] body .min-h-screen.bg-zinc-950 {
+  background-color: var(--bg-app) !important;
+  color: var(--text-app) !important;
+}
+:root[data-theme="bloomberg"] .text-zinc-100,
+:root[data-theme="bloomberg"] .text-zinc-200,
+:root[data-theme="bloomberg"] .text-zinc-300 {
+  color: #fcd34d !important;
+}
+:root[data-theme="bloomberg"] .text-zinc-400,
+:root[data-theme="bloomberg"] .text-zinc-500 {
+  color: #d97706 !important;
+}
+:root[data-theme="bloomberg"] .bg-zinc-900\/60,
+:root[data-theme="bloomberg"] .bg-zinc-900,
+:root[data-theme="bloomberg"] .bg-zinc-900\/40,
+:root[data-theme="bloomberg"] .bg-zinc-900\/80 {
+  background-color: rgba(20, 14, 0, 0.6) !important;
+}
+:root[data-theme="bloomberg"] .border-zinc-800,
+:root[data-theme="bloomberg"] .border-zinc-700 {
+  border-color: rgba(251, 191, 36, 0.25) !important;
+}
+
+:root[data-theme="mint"] body {
+  background-color: var(--bg-app) !important;
+  color: var(--text-app);
+}
+:root[data-theme="mint"] body .min-h-screen.bg-zinc-950 {
+  background-color: var(--bg-app) !important;
+  color: var(--text-app) !important;
+}
+:root[data-theme="mint"] .text-zinc-100,
+:root[data-theme="mint"] .text-zinc-200,
+:root[data-theme="mint"] .text-zinc-300 {
+  color: #064e3b !important;
+}
+:root[data-theme="mint"] .text-zinc-400,
+:root[data-theme="mint"] .text-zinc-500,
+:root[data-theme="mint"] .text-zinc-600 {
+  color: #047857 !important;
+}
+:root[data-theme="mint"] .bg-zinc-900\/60,
+:root[data-theme="mint"] .bg-zinc-900,
+:root[data-theme="mint"] .bg-zinc-900\/40,
+:root[data-theme="mint"] .bg-zinc-900\/80,
+:root[data-theme="mint"] .bg-zinc-950\/85,
+:root[data-theme="mint"] .bg-zinc-950 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+:root[data-theme="mint"] .border-zinc-800,
+:root[data-theme="mint"] .border-zinc-700 {
+  border-color: rgba(5, 150, 105, 0.25) !important;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
