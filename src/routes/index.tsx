@@ -397,6 +397,7 @@ function Dashboard() {
               <TabsTrigger value="glossary">Glossary</TabsTrigger>
               <TabsTrigger value="backtest">Backtest</TabsTrigger>
               <TabsTrigger value="correlations">Correlations</TabsTrigger>
+              <TabsTrigger value="risk">Risk</TabsTrigger>
             </TabsList>
           </div>
 
