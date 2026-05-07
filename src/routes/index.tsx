@@ -1100,6 +1100,19 @@ function Dashboard() {
               history={history}
             />
           </TabsContent>
+
+          <TabsContent
+            value="coach"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Coach
+              stocks={stocks}
+              confirmed={confirmed}
+              rejectedCount={rejectedCount}
+              pendingCount={visiblePending.length}
+              portfolioPnl={totalPnl}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
