@@ -152,31 +152,34 @@ export default function Glossary() {
   const [query, setQuery] = useState("");
   const [letter, setLetter] = useState<string | null>(null);
 
-  const matches = (text: string) => {
-    const q = query.trim().toLowerCase();
-    if (q && !text.toLowerCase().includes(q)) return false;
-    if (letter && !text.toUpperCase().startsWith(letter)) return false;
-    return true;
-  };
+  const q = query.trim().toLowerCase();
 
   const filteredTerms = useMemo(
     () =>
-      TERMS.filter(
-        (t) =>
-          matches(t.abbr) ||
-          (query && (t.full.toLowerCase().includes(query.toLowerCase()) || t.desc.toLowerCase().includes(query.toLowerCase()))) && (!letter || t.abbr.toUpperCase().startsWith(letter)),
-      ),
-    [query, letter],
+      TERMS.filter((t) => {
+        if (letter && !t.abbr.toUpperCase().startsWith(letter)) return false;
+        if (!q) return true;
+        return (
+          t.abbr.toLowerCase().includes(q) ||
+          t.full.toLowerCase().includes(q) ||
+          t.desc.toLowerCase().includes(q)
+        );
+      }),
+    [q, letter],
   );
 
   const filteredTickers = useMemo(
     () =>
-      TICKERS.filter(
-        (t) =>
-          matches(t.symbol) ||
-          (query && (t.name.toLowerCase().includes(query.toLowerCase()) || t.desc.toLowerCase().includes(query.toLowerCase()))) && (!letter || t.symbol.toUpperCase().startsWith(letter)),
-      ),
-    [query, letter],
+      TICKERS.filter((t) => {
+        if (letter && !t.symbol.toUpperCase().startsWith(letter)) return false;
+        if (!q) return true;
+        return (
+          t.symbol.toLowerCase().includes(q) ||
+          t.name.toLowerCase().includes(q) ||
+          t.desc.toLowerCase().includes(q)
+        );
+      }),
+    [q, letter],
   );
 
   const activeLetters = useMemo(() => {
