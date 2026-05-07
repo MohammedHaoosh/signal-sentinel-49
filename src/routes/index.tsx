@@ -937,6 +937,14 @@ function Dashboard() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredNews.map((a) => {
                 const tags = findHotTags(`${a.title} ${a.description ?? ""}`);
+                const sent = sentiment.get(a.url);
+                const sentStyles = sent
+                  ? sent.label === "bullish"
+                    ? "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30"
+                    : sent.label === "bearish"
+                      ? "bg-rose-500/15 text-rose-400 ring-rose-500/30"
+                      : "bg-zinc-700/40 text-zinc-300 ring-zinc-600/40"
+                  : "";
                 return (
                   <a
                     key={a.url}
@@ -949,6 +957,14 @@ function Dashboard() {
                       <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-zinc-300">
                         {a.ticker}
                       </span>
+                      {sent && (
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${sentStyles}`}
+                          title={`AI sentiment confidence ${Math.round(sent.label === "bearish" ? 100 - sent.score : sent.score)}%`}
+                        >
+                          {sent.label} · {Math.round(sent.label === "bearish" ? 100 - sent.score : sent.score)}%
+                        </span>
+                      )}
                       {tags.map((t) => (
                         <span
                           key={t}
