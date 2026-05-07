@@ -1241,6 +1241,35 @@ function Dashboard() {
         </Tabs>
       </div>
 
+      <Dialog open={!!askStock} onOpenChange={(o) => !o && setAskStock(null)}>
+        <DialogContent className="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-lg">
+          {askStock && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-sky-400" />
+                  AI Signal Explainer · {askStock.ticker}
+                </DialogTitle>
+                <p className="text-xs text-zinc-500 font-mono">
+                  ${askStock.price.toFixed(2)} · RSI {askStock.rsi.toFixed(1)} · {askStock.signal}
+                </p>
+              </DialogHeader>
+              <div className="mt-2 min-h-[120px] text-sm leading-relaxed text-zinc-200">
+                {askLoading && <div className="text-zinc-500">Otto is thinking…</div>}
+                {askError && (
+                  <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-rose-300">
+                    {askError}
+                  </div>
+                )}
+                {!askLoading && !askError && askText && (
+                  <div className="whitespace-pre-wrap">{askText}</div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-2xl">
           {selected && (
