@@ -40,6 +40,7 @@ import {
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
 import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
 import { weeklyInsight } from "@/lib/coach.functions";
+import { explainSignal, marketSummary } from "@/lib/ai.functions";
 import { detectPatterns } from "@/lib/patterns";
 import { sounds, setSoundEnabled, loadSoundPref } from "@/lib/sounds";
 
