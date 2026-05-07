@@ -4,9 +4,10 @@ interface Props {
   totalPnl: number;
   pendingCount: number;
   confirmedCount: number;
+  onOpenCoach?: () => void;
 }
 
-export default function Otto({ totalPnl, pendingCount, confirmedCount }: Props) {
+export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoach }: Props) {
   const mood: "happy" | "neutral" | "sad" =
     totalPnl > 1 ? "happy" : totalPnl < -1 ? "sad" : "neutral";
 
