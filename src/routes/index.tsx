@@ -173,6 +173,7 @@ function Dashboard() {
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
+  const [activeTab, setActiveTab] = useState("signals");
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
