@@ -22,6 +22,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import Glossary from "@/components/Glossary";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
@@ -390,6 +391,7 @@ function Dashboard() {
                   </span>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="glossary">Glossary</TabsTrigger>
             </TabsList>
           </div>
 
@@ -902,6 +904,13 @@ function Dashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent
+            value="glossary"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Glossary />
           </TabsContent>
         </Tabs>
       </div>
