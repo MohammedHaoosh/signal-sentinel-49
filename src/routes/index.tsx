@@ -332,8 +332,23 @@ function Dashboard() {
             timestamp: Date.now(),
           },
         ]);
+        sounds.win();
+        try {
+          confetti({
+            particleCount: 60,
+            spread: 65,
+            origin: { y: 0.7 },
+            colors: ["#34d399", "#60a5fa", "#fbbf24"],
+            disableForReducedMotion: true,
+          });
+        } catch {
+          /* ignore */
+        }
       }
-      if (status === "rejected") setRejectedCount((n) => n + 1);
+      if (status === "rejected") {
+        setRejectedCount((n) => n + 1);
+        sounds.loss();
+      }
       return prev.filter((p) => p.id !== id);
     });
   };
