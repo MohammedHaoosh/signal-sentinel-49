@@ -250,7 +250,7 @@ export default function Risk() {
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-6 bg-card/60 backdrop-blur border-border/50">
           <h3 className="text-lg font-semibold mb-3">Daily P/L Tracker</h3>
-          <div className={`text-4xl font-bold ${dailyPL >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          <div className={`text-4xl font-bold ${dailyPL >= 0 ? "text-emerald-300" : "text-red-300"}`}>
             {dailyPL >= 0 ? "+" : ""}${dailyPL.toFixed(2)}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
