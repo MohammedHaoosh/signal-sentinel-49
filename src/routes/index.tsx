@@ -401,8 +401,54 @@ function Dashboard() {
 
   const availableToAdd = TRACKED.filter((t) => !watchlist.includes(t));
 
+  // Sentiment classification on news (debounced cache)
+  useEffect(() => {
+    if (news.length === 0) return;
+    const need = news.filter((n) => !sentiment.has(n.url)).slice(0, 20);
+    if (need.length === 0) return;
+    let cancel = false;
+    classifyFn({
+      data: { items: need.map((n) => ({ url: n.url, title: n.title, ticker: n.ticker })) },
+    })
+      .then((res) => {
+        if (cancel || !res.results) return;
+        setSentiment((prev) => {
+          const m = new Map(prev);
+          res.results.forEach((r) => m.set(r.url, r));
+          return m;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [news, sentiment, classifyFn]);
+
+  // Weekly insight (load when confirmed trades change, throttled)
+  const lastInsightAt = useRef(0);
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastInsightAt.current < 60_000) return;
+    if (stocks.length === 0) return;
+    lastInsightAt.current = now;
+    setInsightLoading(true);
+    const ctx = `Confirmed trades: ${confirmed.length}, rejected: ${rejectedCount}, avg P/L: ${totalPnl.toFixed(2)}%. Last 5 signals: ${history.slice(0, 5).map((h) => `${h.ticker} ${h.signal} RSI ${h.rsi.toFixed(0)}`).join("; ")}.`;
+    weeklyInsightFn({ data: { context: ctx } })
+      .then((res) => setInsight(res.insight))
+      .catch(() => {})
+      .finally(() => setInsightLoading(false));
+  }, [confirmed.length, rejectedCount, stocks.length, weeklyInsightFn, history, totalPnl]);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled(next);
+    if (next) sounds.click();
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <TickerTape stocks={stocks} />
       <div className="mx-auto max-w-7xl px-6 py-8">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -425,8 +471,31 @@ function Dashboard() {
             {lastUpdate && (
               <span>Updated {lastUpdate.toLocaleTimeString()}</span>
             )}
+            <button
+              onClick={toggleSound}
+              className="rounded-md border border-zinc-700 bg-zinc-900 p-1.5 text-zinc-300 hover:bg-zinc-800"
+              aria-label="Toggle sound"
+              title={soundOn ? "Sound on" : "Sound off"}
+            >
+              {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            </button>
+            <ThemeSwitcher />
           </div>
         </header>
+
+        {(insight || insightLoading) && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-zinc-900/40 p-4">
+            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                Otto's Weekly Insight
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {insight ?? "Analyzing your week…"}
+              </div>
+            </div>
+          </div>
+        )}
 
         <Tabs defaultValue="signals" className="w-full">
           <div className="sticky top-0 z-30 -mx-6 mb-6 border-b border-zinc-800/80 bg-zinc-950/85 px-6 py-3 backdrop-blur">
