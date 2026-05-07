@@ -401,6 +401,7 @@ function Dashboard() {
               <TabsTrigger value="correlations">Correlations</TabsTrigger>
               <TabsTrigger value="risk">Risk</TabsTrigger>
               <TabsTrigger value="scanner">Scanner</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
           </div>
 
