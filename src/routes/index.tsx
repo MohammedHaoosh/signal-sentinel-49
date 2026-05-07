@@ -497,7 +497,7 @@ function Dashboard() {
           </div>
         )}
 
-        <Tabs defaultValue="signals" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="sticky top-0 z-30 -mx-6 mb-6 border-b border-zinc-800/80 bg-zinc-950/85 px-6 py-3 backdrop-blur">
             <TabsList className="bg-zinc-900/80 ring-1 ring-zinc-800">
               <TabsTrigger value="signals">Signals</TabsTrigger>
