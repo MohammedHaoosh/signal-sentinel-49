@@ -232,6 +232,20 @@ function Dashboard() {
         (s) => s.signal === "BUY" || s.signal === "SELL",
       );
 
+      // Sound on new signals (only after first load)
+      const prev = prevSignalsRef.current;
+      if (prev.size > 0) {
+        actionable.forEach((s) => {
+          if (prev.get(s.ticker) !== s.signal) {
+            if (s.signal === "BUY") sounds.buy();
+            else if (s.signal === "SELL") sounds.sell();
+          }
+        });
+      }
+      const next = new Map<string, string>();
+      data.forEach((s) => next.set(s.ticker, s.signal));
+      prevSignalsRef.current = next;
+
       setPending((prev) => {
         const activeKeys = new Set(
           prev
