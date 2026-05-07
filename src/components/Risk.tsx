@@ -220,25 +220,25 @@ export default function Risk() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Card className="p-4 bg-muted/20 border-border/40">
+            <Card className="p-4 bg-muted/30 border-border/60">
               <div className="text-xs text-muted-foreground">Recommended Shares</div>
-              <div className="text-2xl font-bold mt-1">{calc.shares}</div>
+              <div className="text-2xl font-bold mt-1 text-foreground">{calc.shares}</div>
             </Card>
-            <Card className="p-4 bg-muted/20 border-border/40">
+            <Card className="p-4 bg-muted/30 border-border/60">
               <div className="text-xs text-muted-foreground">Position Size ($)</div>
-              <div className="text-2xl font-bold mt-1">
+              <div className="text-2xl font-bold mt-1 text-foreground">
                 ${calc.positionDollars.toFixed(2)}
               </div>
             </Card>
-            <Card className="p-4 bg-red-500/10 border-red-500/30">
-              <div className="text-xs text-muted-foreground">Max Loss</div>
-              <div className="text-2xl font-bold mt-1 text-red-400">
+            <Card className="p-4 bg-red-500/15 border-red-400/50">
+              <div className="text-xs text-red-200/80">Max Loss</div>
+              <div className="text-2xl font-bold mt-1 text-red-200">
                 ${calc.maxLoss.toFixed(2)}
               </div>
             </Card>
-            <Card className="p-4 bg-emerald-500/10 border-emerald-500/30">
-              <div className="text-xs text-muted-foreground">Risk:Reward</div>
-              <div className="text-2xl font-bold mt-1 text-emerald-400">
+            <Card className="p-4 bg-emerald-500/15 border-emerald-400/50">
+              <div className="text-xs text-emerald-200/80">Risk:Reward</div>
+              <div className="text-2xl font-bold mt-1 text-emerald-200">
                 1:{calc.rr}
               </div>
             </Card>
