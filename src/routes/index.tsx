@@ -923,6 +923,13 @@ function Dashboard() {
           >
             <Backtest />
           </TabsContent>
+
+          <TabsContent
+            value="correlations"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Correlations />
+          </TabsContent>
         </Tabs>
       </div>
 
