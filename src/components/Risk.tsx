@@ -300,7 +300,7 @@ export default function Risk() {
             ))}
           </div>
           {overexposed.length > 0 && (
-            <div className="mt-3 text-xs text-amber-400 text-center">
+            <div className="mt-3 text-xs text-amber-300 text-center">
               ⚠️ Overexposed: {overexposed.map((s) => s.name).join(", ")} (&gt;40%)
             </div>
           )}
