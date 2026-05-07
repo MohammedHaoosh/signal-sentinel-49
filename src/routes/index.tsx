@@ -1,15 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import confetti from "canvas-confetti";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +20,28 @@ import Correlations from "@/components/Correlations";
 import Risk from "@/components/Risk";
 import Scanner from "@/components/Scanner";
 import Analytics from "@/components/Analytics";
+import Coach from "@/components/Coach";
+import CandleChart from "@/components/CandleChart";
+import CompareChart from "@/components/CompareChart";
+import TickerTape from "@/components/TickerTape";
+import Otto from "@/components/Otto";
+import ThemeSwitcher, { loadTheme } from "@/components/ThemeSwitcher";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, Star, StarOff, ExternalLink, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  Star,
+  StarOff,
+  ExternalLink,
+  Plus,
+  Volume2,
+  VolumeX,
+  Sparkles,
+} from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
+import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
+import { weeklyInsight } from "@/lib/coach.functions";
+import { detectPatterns } from "@/lib/patterns";
+import { sounds, setSoundEnabled, loadSoundPref } from "@/lib/sounds";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -103,14 +114,6 @@ function signalStyles(signal: Signal | "BUY" | "SELL") {
   }
 }
 
-function buildSeries(s: Stock) {
-  const { price, ma20, ma50 } = s;
-  const pts = [ma50, (ma50 + ma20) / 2, ma20, (ma20 + price) / 2, price];
-  return pts.map((p, i) => ({
-    day: `D-${4 - i}`,
-    price: Number(p.toFixed(2)),
-  }));
-}
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -168,6 +171,20 @@ function Dashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selected, setSelected] = useState<Stock | null>(null);
 
+  // Sound + theme + AI features
+  const [soundOn, setSoundOn] = useState(true);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
+  const prevSignalsRef = useRef<Map<string, string>>(new Map());
+  const weeklyInsightFn = useServerFn(weeklyInsight);
+  const classifyFn = useServerFn(classifyHeadlines);
+
+  useEffect(() => {
+    loadTheme();
+    setSoundOn(loadSoundPref());
+  }, []);
+
   // News
   const fetchNewsFn = useServerFn(fetchNews);
   const [news, setNews] = useState<NewsArticle[]>([]);
@@ -214,6 +231,20 @@ function Dashboard() {
       const actionable = data.filter(
         (s) => s.signal === "BUY" || s.signal === "SELL",
       );
+
+      // Sound on new signals (only after first load)
+      const prev = prevSignalsRef.current;
+      if (prev.size > 0) {
+        actionable.forEach((s) => {
+          if (prev.get(s.ticker) !== s.signal) {
+            if (s.signal === "BUY") sounds.buy();
+            else if (s.signal === "SELL") sounds.sell();
+          }
+        });
+      }
+      const next = new Map<string, string>();
+      data.forEach((s) => next.set(s.ticker, s.signal));
+      prevSignalsRef.current = next;
 
       setPending((prev) => {
         const activeKeys = new Set(
@@ -301,8 +332,23 @@ function Dashboard() {
             timestamp: Date.now(),
           },
         ]);
+        sounds.win();
+        try {
+          confetti({
+            particleCount: 60,
+            spread: 65,
+            origin: { y: 0.7 },
+            colors: ["#34d399", "#60a5fa", "#fbbf24"],
+            disableForReducedMotion: true,
+          });
+        } catch {
+          /* ignore */
+        }
       }
-      if (status === "rejected") setRejectedCount((n) => n + 1);
+      if (status === "rejected") {
+        setRejectedCount((n) => n + 1);
+        sounds.loss();
+      }
       return prev.filter((p) => p.id !== id);
     });
   };
@@ -355,8 +401,54 @@ function Dashboard() {
 
   const availableToAdd = TRACKED.filter((t) => !watchlist.includes(t));
 
+  // Sentiment classification on news (debounced cache)
+  useEffect(() => {
+    if (news.length === 0) return;
+    const need = news.filter((n) => !sentiment.has(n.url)).slice(0, 20);
+    if (need.length === 0) return;
+    let cancel = false;
+    classifyFn({
+      data: { items: need.map((n) => ({ url: n.url, title: n.title, ticker: n.ticker })) },
+    })
+      .then((res) => {
+        if (cancel || !res.results) return;
+        setSentiment((prev) => {
+          const m = new Map(prev);
+          res.results.forEach((r) => m.set(r.url, r));
+          return m;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [news, sentiment, classifyFn]);
+
+  // Weekly insight (load when confirmed trades change, throttled)
+  const lastInsightAt = useRef(0);
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastInsightAt.current < 60_000) return;
+    if (stocks.length === 0) return;
+    lastInsightAt.current = now;
+    setInsightLoading(true);
+    const ctx = `Confirmed trades: ${confirmed.length}, rejected: ${rejectedCount}, avg P/L: ${totalPnl.toFixed(2)}%. Last 5 signals: ${history.slice(0, 5).map((h) => `${h.ticker} ${h.signal} RSI ${h.rsi.toFixed(0)}`).join("; ")}.`;
+    weeklyInsightFn({ data: { context: ctx } })
+      .then((res) => setInsight(res.insight))
+      .catch(() => {})
+      .finally(() => setInsightLoading(false));
+  }, [confirmed.length, rejectedCount, stocks.length, weeklyInsightFn, history, totalPnl]);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled(next);
+    if (next) sounds.click();
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <TickerTape stocks={stocks} />
       <div className="mx-auto max-w-7xl px-6 py-8">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -379,8 +471,31 @@ function Dashboard() {
             {lastUpdate && (
               <span>Updated {lastUpdate.toLocaleTimeString()}</span>
             )}
+            <button
+              onClick={toggleSound}
+              className="rounded-md border border-zinc-700 bg-zinc-900 p-1.5 text-zinc-300 hover:bg-zinc-800"
+              aria-label="Toggle sound"
+              title={soundOn ? "Sound on" : "Sound off"}
+            >
+              {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            </button>
+            <ThemeSwitcher />
           </div>
         </header>
+
+        {(insight || insightLoading) && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-zinc-900/40 p-4">
+            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                Otto's Weekly Insight
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {insight ?? "Analyzing your week…"}
+              </div>
+            </div>
+          </div>
+        )}
 
         <Tabs defaultValue="signals" className="w-full">
           <div className="sticky top-0 z-30 -mx-6 mb-6 border-b border-zinc-800/80 bg-zinc-950/85 px-6 py-3 backdrop-blur">
@@ -402,6 +517,10 @@ function Dashboard() {
               <TabsTrigger value="risk">Risk</TabsTrigger>
               <TabsTrigger value="scanner">Scanner</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="coach">
+                <Sparkles className="mr-1 h-3 w-3" />
+                Coach
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -803,6 +922,9 @@ function Dashboard() {
                 stocks={trendingDown}
               />
             </div>
+            <div className="mt-6">
+              <CompareChart stocks={stocks} />
+            </div>
           </TabsContent>
 
           {/* WATCHLIST */}
@@ -978,6 +1100,19 @@ function Dashboard() {
               history={history}
             />
           </TabsContent>
+
+          <TabsContent
+            value="coach"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Coach
+              stocks={stocks}
+              confirmed={confirmed}
+              rejectedCount={rejectedCount}
+              pendingCount={visiblePending.length}
+              portfolioPnl={totalPnl}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -998,52 +1133,13 @@ function Dashboard() {
                   ${selected.price.toFixed(2)} · 5-day close
                 </p>
               </DialogHeader>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={buildSeries(selected)}
-                    margin={{ top: 10, right: 16, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      stroke="#27272a"
-                      strokeDasharray="3 3"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="day"
-                      stroke="#71717a"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#71717a"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={["auto", "auto"]}
-                      tickFormatter={(v) => `$${v}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "#09090b",
-                        border: "1px solid #27272a",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      labelStyle={{ color: "#a1a1aa" }}
-                      formatter={(v: number) => [`$${v.toFixed(2)}`, "Price"]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke="#34d399"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: "#34d399" }}
-                      activeDot={{ r: 5 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="w-full">
+                <CandleChart
+                  ticker={selected.ticker}
+                  price={selected.price}
+                  ma20={selected.ma20}
+                  ma50={selected.ma50}
+                />
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
@@ -1069,6 +1165,11 @@ function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+      <Otto
+        totalPnl={totalPnl}
+        pendingCount={visiblePending.length}
+        confirmedCount={confirmed.length}
+      />
     </div>
   );
 }
