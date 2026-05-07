@@ -1001,52 +1001,13 @@ function Dashboard() {
                   ${selected.price.toFixed(2)} · 5-day close
                 </p>
               </DialogHeader>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={buildSeries(selected)}
-                    margin={{ top: 10, right: 16, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      stroke="#27272a"
-                      strokeDasharray="3 3"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="day"
-                      stroke="#71717a"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#71717a"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={["auto", "auto"]}
-                      tickFormatter={(v) => `$${v}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "#09090b",
-                        border: "1px solid #27272a",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      labelStyle={{ color: "#a1a1aa" }}
-                      formatter={(v: number) => [`$${v.toFixed(2)}`, "Price"]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke="#34d399"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: "#34d399" }}
-                      activeDot={{ r: 5 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="w-full">
+                <CandleChart
+                  ticker={selected.ticker}
+                  price={selected.price}
+                  ma20={selected.ma20}
+                  ma50={selected.ma50}
+                />
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
