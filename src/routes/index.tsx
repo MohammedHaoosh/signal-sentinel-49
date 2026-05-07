@@ -932,6 +932,13 @@ function Dashboard() {
           >
             <Correlations />
           </TabsContent>
+
+          <TabsContent
+            value="risk"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <Risk />
+          </TabsContent>
         </Tabs>
       </div>
 
