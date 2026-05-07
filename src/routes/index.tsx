@@ -559,6 +559,29 @@ function Dashboard() {
           </div>
         </header>
 
+        {(marketBrief || marketBriefLoading) && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 to-zinc-900/40 p-4">
+            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-400" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-400">
+                  AI Daily Market Brief
+                </div>
+                <button
+                  onClick={loadMarketBrief}
+                  disabled={marketBriefLoading}
+                  className="text-[10px] uppercase tracking-wide text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
+                >
+                  {marketBriefLoading ? "Refreshing…" : "Refresh"}
+                </button>
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {marketBrief ?? "Analyzing today's market…"}
+              </div>
+            </div>
+          </div>
+        )}
+
         {(insight || insightLoading) && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-zinc-900/40 p-4">
             <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
