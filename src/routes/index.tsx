@@ -55,7 +55,9 @@ function Dashboard() {
 
   const fetchSignals = useCallback(async () => {
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_URL, {
+        headers: { "ngrok-skip-browser-warning": "true" },
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: Stock[] = await res.json();
       setStocks(data);
