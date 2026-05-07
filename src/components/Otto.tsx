@@ -57,7 +57,11 @@ export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoa
   const moodColor = mood === "happy" ? "#34d399" : mood === "sad" ? "#fb7185" : "#a1a1aa";
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div
+      className="fixed bottom-6 right-6 z-50 flex flex-col items-end"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       {(open || bubble) && (
         <div className="mb-2 max-w-xs animate-in fade-in slide-in-from-bottom-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 shadow-xl">
           <div className="mb-1 font-semibold text-zinc-100">Otto</div>
@@ -66,8 +70,6 @@ export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoa
       )}
       <button
         onClick={() => onOpenCoach?.()}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
         className="group relative grid h-14 w-14 place-items-center rounded-full border-2 bg-zinc-900 shadow-xl transition hover:scale-105"
         style={{ borderColor: moodColor }}
         aria-label="Open Otto the trading coach"
@@ -81,7 +83,7 @@ export default function Otto({ totalPnl, pendingCount, confirmedCount, onOpenCoa
           <circle cx="32" cy="5" r="2" fill={moodColor} />
         </svg>
         <span
-          className="absolute -bottom-1 -right-1 h-3 w-3 animate-pulse rounded-full"
+          className="pointer-events-none absolute -bottom-1 -right-1 h-3 w-3 animate-pulse rounded-full"
           style={{ background: moodColor }}
         />
       </button>
