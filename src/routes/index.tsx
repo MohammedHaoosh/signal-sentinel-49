@@ -83,7 +83,18 @@ interface HistoryEntry {
 }
 
 const API_URL = "https://iron-condor.duckdns.org/signals";
-const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR"];
+const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR", "BTC-USD", "GC=F"];
+
+const DISPLAY_NAMES: Record<string, string> = {
+  "BTC-USD": "Bitcoin",
+  "GC=F": "Gold",
+};
+const displayName = (t: string) => DISPLAY_NAMES[t] ?? t;
+const assetCardClass = (t: string) => {
+  if (t === "GC=F") return "border-amber-400/50 bg-gradient-to-br from-amber-500/5 to-zinc-900/60 hover:border-amber-400/70";
+  if (t === "BTC-USD") return "border-orange-500/50 bg-gradient-to-br from-orange-500/5 to-zinc-900/60 hover:border-orange-500/70";
+  return "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700 hover:bg-zinc-900";
+};
 const HOT_KEYWORDS = [
   "crash",
   "surge",
@@ -641,7 +652,7 @@ function Dashboard() {
                 {stocks.map((s) => (
                   <div
                     key={s.ticker}
-                    className="group relative rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
+                    className={`group relative rounded-xl border p-5 transition ${assetCardClass(s.ticker)}`}
                   >
                     <button
                       onClick={(e) => {
@@ -664,7 +675,7 @@ function Dashboard() {
                       <div className="flex items-start justify-between pr-6">
                         <div>
                           <h2 className="text-lg font-semibold tracking-tight">
-                            {s.ticker}
+                            {displayName(s.ticker)}
                           </h2>
                           <p className="mt-1 text-2xl font-mono font-medium">
                             ${s.price.toFixed(2)}
