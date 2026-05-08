@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-const API_URL = "http://209.38.43.35:5000/signals";
+const API_URL = "https://iron-condor.duckdns.org/signals";
 const TICKERS = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR"];
 
 type Period = "1w" | "1m" | "all";

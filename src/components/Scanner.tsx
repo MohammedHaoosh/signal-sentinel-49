@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-const API_URL = "http://209.38.43.35:5000/signals";
+const API_URL = "https://iron-condor.duckdns.org/signals";
 
 interface Stock {
   ticker: string;

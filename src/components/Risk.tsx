@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 
-const API_URL = "http://209.38.43.35:5000/signals";
+const API_URL = "https://iron-condor.duckdns.org/signals";
 
 interface Signal {
   ticker: string;

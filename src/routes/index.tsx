@@ -82,7 +82,7 @@ interface HistoryEntry {
   signal: "BUY" | "SELL";
 }
 
-const API_URL = "http://209.38.43.35:5000/signals";
+const API_URL = "https://iron-condor.duckdns.org/signals";
 const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR"];
 const HOT_KEYWORDS = [
   "crash",
