@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { ArrowDown, ArrowUp, Download } from "lucide-react";
 
-const API_URL = "https://unblessed-powwow-player.ngrok-free.dev/signals";
+const API_URL = "http://209.38.43.35:5000/signals";
 const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR"];
 
 interface ConfirmedTrade {
