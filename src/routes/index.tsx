@@ -652,7 +652,7 @@ function Dashboard() {
                 {stocks.map((s) => (
                   <div
                     key={s.ticker}
-                    className="group relative rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
+                    className={`group relative rounded-xl border p-5 transition ${assetCardClass(s.ticker)}`}
                   >
                     <button
                       onClick={(e) => {
@@ -675,7 +675,7 @@ function Dashboard() {
                       <div className="flex items-start justify-between pr-6">
                         <div>
                           <h2 className="text-lg font-semibold tracking-tight">
-                            {s.ticker}
+                            {displayName(s.ticker)}
                           </h2>
                           <p className="mt-1 text-2xl font-mono font-medium">
                             ${s.price.toFixed(2)}
