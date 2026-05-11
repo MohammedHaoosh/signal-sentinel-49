@@ -507,7 +507,19 @@ function Dashboard() {
               ? (t.timestamp > 1e12 ? t.timestamp : t.timestamp * 1000)
               : Date.now(),
           }));
-        if (restored.length > 0) setConfirmed((cur) => (cur.length === 0 ? restored : cur));
+        // Dedupe by ticker+direction, keep the most recent
+        const byKey = new Map<string, ConfirmedTrade>();
+        for (const t of restored) {
+          const k = `${t.ticker}|${t.direction}`;
+          const ex = byKey.get(k);
+          if (!ex || t.timestamp > ex.timestamp) byKey.set(k, t);
+        }
+        const deduped = Array.from(byKey.values());
+        // Seed dedupe set so future confirms for same ticker+signal+price are skipped
+        for (const t of deduped) {
+          confirmedKeysRef.current.add(`${t.ticker}|${t.direction}|${t.entryPrice}`);
+        }
+        if (deduped.length > 0) setConfirmed((cur) => (cur.length === 0 ? deduped : cur));
       } catch {
         flashWarning("Couldn't load trade history from server.");
       }
