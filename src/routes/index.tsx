@@ -211,6 +211,10 @@ function Dashboard() {
   const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<Stock | null>(null);
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const confirmedKeysRef = useRef<Set<string>>(new Set());
+  const [bulkDisabled, setBulkDisabled] = useState(false);
+  const tradeKey = (t: { ticker: string; signal: string; price: number }) =>
+    `${t.ticker}|${t.signal}|${t.price}`;
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
@@ -414,6 +418,11 @@ function Dashboard() {
     trade: PendingTrade,
     decision: "confirm" | "reject",
   ) => {
+    if (decision === "confirm") {
+      const key = tradeKey(trade);
+      if (confirmedKeysRef.current.has(key)) return;
+      confirmedKeysRef.current.add(key);
+    }
     try {
       const res = await fetch(`${TRADES_BASE}/${decision}`, {
         method: "POST",
@@ -498,7 +507,19 @@ function Dashboard() {
               ? (t.timestamp > 1e12 ? t.timestamp : t.timestamp * 1000)
               : Date.now(),
           }));
-        if (restored.length > 0) setConfirmed((cur) => (cur.length === 0 ? restored : cur));
+        // Dedupe by ticker+direction, keep the most recent
+        const byKey = new Map<string, ConfirmedTrade>();
+        for (const t of restored) {
+          const k = `${t.ticker}|${t.direction}`;
+          const ex = byKey.get(k);
+          if (!ex || t.timestamp > ex.timestamp) byKey.set(k, t);
+        }
+        const deduped = Array.from(byKey.values());
+        // Seed dedupe set so future confirms for same ticker+signal+price are skipped
+        for (const t of deduped) {
+          confirmedKeysRef.current.add(`${t.ticker}|${t.direction}|${t.entryPrice}`);
+        }
+        if (deduped.length > 0) setConfirmed((cur) => (cur.length === 0 ? deduped : cur));
       } catch {
         flashWarning("Couldn't load trade history from server.");
       }
@@ -962,18 +983,26 @@ function Dashboard() {
                       </span>
                       <div className="flex gap-2">
                         <button
+                          disabled={bulkDisabled}
                           onClick={() => {
+                            if (bulkDisabled) return;
+                            setBulkDisabled(true);
                             visiblePending.forEach((p) => decide(p.id, "confirmed"));
+                            setTimeout(() => setBulkDisabled(false), 3000);
                           }}
-                          className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
+                          className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Confirm All
                         </button>
                         <button
+                          disabled={bulkDisabled}
                           onClick={() => {
+                            if (bulkDisabled) return;
+                            setBulkDisabled(true);
                             visiblePending.forEach((p) => decide(p.id, "rejected"));
+                            setTimeout(() => setBulkDisabled(false), 3000);
                           }}
-                          className="rounded-md bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
+                          className="rounded-md bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Reject All
                         </button>
