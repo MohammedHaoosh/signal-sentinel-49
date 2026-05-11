@@ -83,6 +83,7 @@ interface HistoryEntry {
 }
 
 const API_URL = "https://iron-condor.duckdns.org/signals";
+const TRADES_BASE = "https://iron-condor.duckdns.org/trades";
 const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR", "BTC-USD", "GC=F"];
 
 const DISPLAY_NAMES: Record<string, string> = {
