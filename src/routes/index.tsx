@@ -118,15 +118,33 @@ function rsiDot(rsi: number) {
   if (rsi > 70) return "bg-rose-400";
   return "bg-zinc-500";
 }
-function signalStyles(signal: Signal | "BUY" | "SELL") {
+function signalStyles(signal: Signal | "BUY" | "SELL" | "STRONG BUY" | "STRONG SELL") {
   switch (signal) {
+    case "STRONG BUY":
     case "BUY":
       return "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30";
+    case "STRONG SELL":
     case "SELL":
       return "bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/30";
     default:
       return "bg-zinc-500/15 text-zinc-400 ring-1 ring-zinc-500/30";
   }
+}
+
+function signalLabel(signal: Signal | "BUY" | "SELL", score?: number): string {
+  if (typeof score === "number") {
+    if (signal === "BUY" && score >= 5) return "STRONG BUY";
+    if (signal === "SELL" && score <= -5) return "STRONG SELL";
+  }
+  return signal;
+}
+
+function scoreBadgeClass(score: number) {
+  if (score >= 5) return "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40";
+  if (score >= 2) return "bg-emerald-500/10 text-emerald-400/90 ring-1 ring-emerald-500/20";
+  if (score >= -1) return "bg-zinc-500/15 text-zinc-300 ring-1 ring-zinc-500/30";
+  if (score >= -4) return "bg-rose-500/10 text-rose-400/90 ring-1 ring-rose-500/20";
+  return "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40";
 }
 
 
