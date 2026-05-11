@@ -57,6 +57,8 @@ interface Stock {
   ma20: number;
   ma50: number;
   signal: Signal;
+  score?: number;
+  reasons?: string[];
 }
 
 interface PendingTrade extends Stock {
@@ -116,15 +118,36 @@ function rsiDot(rsi: number) {
   if (rsi > 70) return "bg-rose-400";
   return "bg-zinc-500";
 }
-function signalStyles(signal: Signal | "BUY" | "SELL") {
+function signalStyles(signal: Signal | "BUY" | "SELL" | "STRONG BUY" | "STRONG SELL") {
   switch (signal) {
+    case "STRONG BUY":
     case "BUY":
       return "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30";
+    case "STRONG SELL":
     case "SELL":
       return "bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/30";
     default:
       return "bg-zinc-500/15 text-zinc-400 ring-1 ring-zinc-500/30";
   }
+}
+
+function signalLabel(
+  signal: Signal | "BUY" | "SELL",
+  score?: number,
+): Signal | "STRONG BUY" | "STRONG SELL" {
+  if (typeof score === "number") {
+    if (signal === "BUY" && score >= 5) return "STRONG BUY";
+    if (signal === "SELL" && score <= -5) return "STRONG SELL";
+  }
+  return signal;
+}
+
+function scoreBadgeClass(score: number) {
+  if (score >= 5) return "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40";
+  if (score >= 2) return "bg-emerald-500/10 text-emerald-400/90 ring-1 ring-emerald-500/20";
+  if (score >= -1) return "bg-zinc-500/15 text-zinc-300 ring-1 ring-zinc-500/30";
+  if (score >= -4) return "bg-rose-500/10 text-rose-400/90 ring-1 ring-rose-500/20";
+  return "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40";
 }
 
 
@@ -183,6 +206,7 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selected, setSelected] = useState<Stock | null>(null);
+  const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
@@ -757,13 +781,23 @@ function Dashboard() {
                             ${s.price.toFixed(2)}
                           </p>
                         </div>
-                        <span
-                          className={`rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide ${signalStyles(
-                            s.signal,
-                          )}`}
-                        >
-                          {s.signal}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide ${signalStyles(
+                              signalLabel(s.signal, s.score),
+                            )}`}
+                          >
+                            {signalLabel(s.signal, s.score)}
+                          </span>
+                          {typeof s.score === "number" && (
+                            <span
+                              className={`rounded-md px-1.5 py-1 text-xs font-mono font-semibold ${scoreBadgeClass(s.score)}`}
+                              title="Signal strength"
+                            >
+                              {s.score > 0 ? `+${s.score}` : s.score}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="mt-5 space-y-2.5 text-sm">
                         <div className="flex items-center justify-between">
@@ -789,6 +823,34 @@ function Dashboard() {
                         </div>
                       </div>
                     </button>
+                    {s.reasons && s.reasons.length > 0 && (
+                      <div className="mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedReasons((prev) => ({ ...prev, [s.ticker]: !prev[s.ticker] }));
+                          }}
+                          className="flex w-full items-center justify-between rounded-md px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                        >
+                          <span>Reasons ({s.reasons.length})</span>
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${
+                              expandedReasons[s.ticker] ? "" : "-rotate-90"
+                            }`}
+                          />
+                        </button>
+                        {expandedReasons[s.ticker] && (
+                          <ul className="mt-1.5 space-y-1 px-2 text-xs text-zinc-500">
+                            {s.reasons.map((r, i) => (
+                              <li key={i} className="flex gap-1.5">
+                                <span className="text-zinc-600">•</span>
+                                <span>{r}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
