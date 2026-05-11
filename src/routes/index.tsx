@@ -203,6 +203,7 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selected, setSelected] = useState<Stock | null>(null);
+  const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
