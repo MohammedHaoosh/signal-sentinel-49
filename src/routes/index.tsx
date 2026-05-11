@@ -983,18 +983,26 @@ function Dashboard() {
                       </span>
                       <div className="flex gap-2">
                         <button
+                          disabled={bulkDisabled}
                           onClick={() => {
+                            if (bulkDisabled) return;
+                            setBulkDisabled(true);
                             visiblePending.forEach((p) => decide(p.id, "confirmed"));
+                            setTimeout(() => setBulkDisabled(false), 3000);
                           }}
-                          className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
+                          className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Confirm All
                         </button>
                         <button
+                          disabled={bulkDisabled}
                           onClick={() => {
+                            if (bulkDisabled) return;
+                            setBulkDisabled(true);
                             visiblePending.forEach((p) => decide(p.id, "rejected"));
+                            setTimeout(() => setBulkDisabled(false), 3000);
                           }}
-                          className="rounded-md bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
+                          className="rounded-md bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Reject All
                         </button>
