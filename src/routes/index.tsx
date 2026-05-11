@@ -36,6 +36,7 @@ import {
   Volume2,
   VolumeX,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
 import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
