@@ -57,6 +57,8 @@ interface Stock {
   ma20: number;
   ma50: number;
   signal: Signal;
+  score?: number;
+  reasons?: string[];
 }
 
 interface PendingTrade extends Stock {
