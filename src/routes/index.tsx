@@ -428,12 +428,12 @@ function Dashboard() {
           rsi: trade.rsi,
           ma20: trade.ma20,
           ma50: trade.ma50,
-          timestamp: Math.floor(Date.now() / 1000),
+          timestamp: Date.now(),
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch {
-      flashWarning(`Couldn't save ${decision} for ${trade.ticker} — kept locally.`);
+      flashWarning("Decision saved locally only — backend sync failed.");
     }
   };
 
