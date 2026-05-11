@@ -608,6 +608,11 @@ function Dashboard() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <TickerTape stocks={stocks} />
       <div className="mx-auto max-w-7xl px-6 py-8">
+        {saveWarning && (
+          <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+            ⚠ {saveWarning}
+          </div>
+        )}
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
