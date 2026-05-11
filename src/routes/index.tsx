@@ -83,6 +83,7 @@ interface HistoryEntry {
 }
 
 const API_URL = "https://iron-condor.duckdns.org/signals";
+const TRADES_BASE = "https://iron-condor.duckdns.org/trades";
 const TRACKED = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR", "BTC-USD", "GC=F"];
 
 const DISPLAY_NAMES: Record<string, string> = {
@@ -343,9 +344,45 @@ function Dashboard() {
     return m;
   }, [stocks]);
 
+  const [saveWarning, setSaveWarning] = useState<string | null>(null);
+  const flashWarning = (msg: string) => {
+    setSaveWarning(msg);
+    setTimeout(() => setSaveWarning((cur) => (cur === msg ? null : cur)), 4000);
+  };
+
+  const postTradeDecision = async (
+    trade: PendingTrade,
+    decision: "confirm" | "reject",
+  ) => {
+    try {
+      const res = await fetch(`${TRADES_BASE}/${decision}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({
+          ticker: trade.ticker,
+          price: trade.price,
+          signal: trade.signal,
+          rsi: trade.rsi,
+          ma20: trade.ma20,
+          ma50: trade.ma50,
+          timestamp: Math.floor(Date.now() / 1000),
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch {
+      flashWarning(`Couldn't save ${decision} for ${trade.ticker} — kept locally.`);
+    }
+  };
+
   const decide = (id: string, status: "confirmed" | "rejected") => {
     setPending((prev) => {
       const trade = prev.find((p) => p.id === id);
+      if (trade) {
+        void postTradeDecision(trade, status === "confirmed" ? "confirm" : "reject");
+      }
       if (trade && status === "confirmed") {
         setConfirmed((c) => [
           ...c,
@@ -377,6 +414,40 @@ function Dashboard() {
       return prev.filter((p) => p.id !== id);
     });
   };
+
+  // Load persisted confirmed trade history once on mount
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const res = await fetch(TRADES_BASE, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const arr: any[] = Array.isArray(data) ? data : data.trades ?? [];
+        if (cancel) return;
+        const restored: ConfirmedTrade[] = arr
+          .filter((t) => (t.signal ?? t.direction) === "BUY" || (t.signal ?? t.direction) === "SELL")
+          .map((t, i) => ({
+            id: t.id ?? `hist-${i}-${t.timestamp ?? Date.now()}`,
+            ticker: t.ticker,
+            entryPrice: Number(t.price ?? t.entryPrice ?? 0),
+            direction: (t.signal ?? t.direction) as "BUY" | "SELL",
+            timestamp: typeof t.timestamp === "number"
+              ? (t.timestamp > 1e12 ? t.timestamp : t.timestamp * 1000)
+              : Date.now(),
+          }));
+        if (restored.length > 0) setConfirmed((cur) => (cur.length === 0 ? restored : cur));
+      } catch {
+        flashWarning("Couldn't load trade history from server.");
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
 
   const visiblePending = pending.filter((p) => p.status === "pending");
 
@@ -537,6 +608,11 @@ function Dashboard() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <TickerTape stocks={stocks} />
       <div className="mx-auto max-w-7xl px-6 py-8">
+        {saveWarning && (
+          <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+            ⚠ {saveWarning}
+          </div>
+        )}
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
