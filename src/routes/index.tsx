@@ -211,6 +211,10 @@ function Dashboard() {
   const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<Stock | null>(null);
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const confirmedKeysRef = useRef<Set<string>>(new Set());
+  const [bulkDisabled, setBulkDisabled] = useState(false);
+  const tradeKey = (t: { ticker: string; signal: string; price: number }) =>
+    `${t.ticker}|${t.signal}|${t.price}`;
 
   // Sound + theme + AI features
   const [soundOn, setSoundOn] = useState(true);
