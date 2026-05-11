@@ -843,6 +843,11 @@ function Dashboard() {
                           <p className="mt-1 text-2xl font-mono font-medium">
                             ${s.price.toFixed(2)}
                           </p>
+                          {(error || !backendHealthy) && (
+                            <p className="mt-0.5 text-[10px] text-amber-400/80">
+                              Showing cached data
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span
