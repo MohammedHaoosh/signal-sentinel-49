@@ -887,44 +887,107 @@ function Dashboard() {
                     No pending trades.
                   </div>
                 ) : (
-                  <ul className="divide-y divide-zinc-800">
-                    {visiblePending.map((p) => (
-                      <li
-                        key={p.id}
-                        className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span
-                            className={`rounded-md px-2.5 py-1 text-xs font-semibold ${signalStyles(
-                              p.signal,
-                            )}`}
-                          >
-                            {p.signal}
-                          </span>
-                          <div>
-                            <div className="font-semibold">{p.ticker}</div>
-                            <div className="text-xs text-zinc-500 font-mono">
-                              ${p.price.toFixed(2)} · RSI {p.rsi.toFixed(1)}
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-5 py-3">
+                      <span className="text-xs text-amber-400/90">
+                        ⚠ Always verify before confirming — bot signals are not financial advice
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            visiblePending.forEach((p) => decide(p.id, "confirmed"));
+                          }}
+                          className="rounded-md bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
+                        >
+                          Confirm All
+                        </button>
+                        <button
+                          onClick={() => {
+                            visiblePending.forEach((p) => decide(p.id, "rejected"));
+                          }}
+                          className="rounded-md bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
+                        >
+                          Reject All
+                        </button>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-zinc-800">
+                      {visiblePending.map((p) => {
+                        const mins = Math.max(0, Math.floor((Date.now() - p.createdAt) / 60000));
+                        const ago = mins < 1 ? "just now" : `${mins} minute${mins === 1 ? "" : "s"} ago`;
+                        const t2 = p.signal === "BUY" ? p.price * 1.02 : p.price * 0.98;
+                        const t4 = p.signal === "BUY" ? p.price * 1.04 : p.price * 0.96;
+                        const targetCls =
+                          p.signal === "BUY"
+                            ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30";
+                        const targetLabel = p.signal === "BUY" ? "+" : "-";
+                        return (
+                          <li key={p.id} className="px-5 py-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="flex items-start gap-4">
+                                <div className="flex flex-col items-start gap-1">
+                                  <span
+                                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${signalStyles(
+                                      signalLabel(p.signal, p.score),
+                                    )}`}
+                                  >
+                                    {signalLabel(p.signal, p.score)}
+                                  </span>
+                                  {typeof p.score === "number" && (
+                                    <span
+                                      className={`rounded-md px-1.5 py-0.5 text-[11px] font-mono font-semibold ${scoreBadgeClass(p.score)}`}
+                                    >
+                                      {p.score > 0 ? `+${p.score}` : p.score}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-semibold">{displayName(p.ticker)}</div>
+                                  <div className="text-xs text-zinc-500 font-mono">
+                                    ${p.price.toFixed(2)} · RSI {p.rsi.toFixed(1)}
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] text-zinc-500">{ago}</div>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-mono ${targetCls}`}>
+                                      {targetLabel}2% target · ${t2.toFixed(2)}
+                                    </span>
+                                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-mono ${targetCls}`}>
+                                      {targetLabel}4% target · ${t4.toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => decide(p.id, "confirmed")}
+                                  className="rounded-md bg-emerald-500/15 px-4 py-1.5 text-sm font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => decide(p.id, "rejected")}
+                                  className="rounded-md bg-rose-500/15 px-4 py-1.5 text-sm font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
+                                >
+                                  Reject
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => decide(p.id, "confirmed")}
-                            className="rounded-md bg-emerald-500/15 px-4 py-1.5 text-sm font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => decide(p.id, "rejected")}
-                            className="rounded-md bg-rose-500/15 px-4 py-1.5 text-sm font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                            {p.reasons && p.reasons.length > 0 && (
+                              <ul className="mt-3 space-y-1 pl-1 text-xs text-zinc-400">
+                                {p.reasons.map((r, i) => (
+                                  <li key={i} className="flex gap-1.5">
+                                    <span className="text-zinc-600">•</span>
+                                    <span>{r}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
                 )}
               </div>
             </Section>
