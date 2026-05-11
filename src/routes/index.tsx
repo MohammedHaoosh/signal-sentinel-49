@@ -131,7 +131,10 @@ function signalStyles(signal: Signal | "BUY" | "SELL" | "STRONG BUY" | "STRONG S
   }
 }
 
-function signalLabel(signal: Signal | "BUY" | "SELL", score?: number): string {
+function signalLabel(
+  signal: Signal | "BUY" | "SELL",
+  score?: number,
+): Signal | "STRONG BUY" | "STRONG SELL" {
   if (typeof score === "number") {
     if (signal === "BUY" && score >= 5) return "STRONG BUY";
     if (signal === "SELL" && score <= -5) return "STRONG SELL";
