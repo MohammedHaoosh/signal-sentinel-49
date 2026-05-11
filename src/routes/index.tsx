@@ -206,6 +206,9 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const [backendHealthy, setBackendHealthy] = useState(true);
+  const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<Stock | null>(null);
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
 
