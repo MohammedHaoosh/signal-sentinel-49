@@ -341,6 +341,38 @@ function Dashboard() {
     return () => clearInterval(id);
   }, [fetchSignals]);
 
+  const manualRefresh = useCallback(async () => {
+    setManualRefreshing(true);
+    try {
+      await fetchSignals();
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [fetchSignals]);
+
+  // Health check ping every 5 minutes
+  useEffect(() => {
+    const ping = async () => {
+      try {
+        const res = await fetch("https://iron-condor.duckdns.org/health", {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        setBackendHealthy(res.ok);
+      } catch {
+        setBackendHealthy(false);
+      }
+    };
+    ping();
+    const id = setInterval(ping, 5 * 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // 1s tick for countdowns
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const loadNews = useCallback(async () => {
     setNewsLoading(true);
     try {
