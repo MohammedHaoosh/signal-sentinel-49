@@ -418,6 +418,11 @@ function Dashboard() {
     trade: PendingTrade,
     decision: "confirm" | "reject",
   ) => {
+    if (decision === "confirm") {
+      const key = tradeKey(trade);
+      if (confirmedKeysRef.current.has(key)) return;
+      confirmedKeysRef.current.add(key);
+    }
     try {
       const res = await fetch(`${TRADES_BASE}/${decision}`, {
         method: "POST",
