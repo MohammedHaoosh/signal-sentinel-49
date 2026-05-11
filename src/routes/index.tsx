@@ -36,6 +36,7 @@ import {
   Volume2,
   VolumeX,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
 import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
@@ -205,6 +206,9 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const [backendHealthy, setBackendHealthy] = useState(true);
+  const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<Stock | null>(null);
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
 
@@ -336,6 +340,38 @@ function Dashboard() {
     const id = setInterval(fetchSignals, 60_000);
     return () => clearInterval(id);
   }, [fetchSignals]);
+
+  const manualRefresh = useCallback(async () => {
+    setManualRefreshing(true);
+    try {
+      await fetchSignals();
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [fetchSignals]);
+
+  // Health check ping every 5 minutes
+  useEffect(() => {
+    const ping = async () => {
+      try {
+        const res = await fetch("https://iron-condor.duckdns.org/health", {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        setBackendHealthy(res.ok);
+      } catch {
+        setBackendHealthy(false);
+      }
+    };
+    ping();
+    const id = setInterval(ping, 5 * 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // 1s tick for countdowns
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const loadNews = useCallback(async () => {
     setNewsLoading(true);
@@ -637,6 +673,11 @@ function Dashboard() {
             ⚠ {saveWarning}
           </div>
         )}
+        {!backendHealthy && (
+          <div className="mb-4 rounded-lg border border-amber-500/50 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-200">
+            ⚠ Backend offline — signals may be stale. Last known data shown.
+          </div>
+        )}
         <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
@@ -647,14 +688,36 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3 text-xs text-zinc-500">
-            <span className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  error ? "bg-rose-400" : "bg-emerald-400 animate-pulse"
-                }`}
-              />
-              {error ? "Disconnected" : "Live"}
-            </span>
+            {(() => {
+              const lastMs = lastUpdate ? now - lastUpdate.getTime() : 0;
+              const lastSec = Math.max(0, Math.floor(lastMs / 1000));
+              const nextSec = lastUpdate ? Math.max(0, 60 - lastSec) : 60;
+              const tooltip = lastUpdate
+                ? `Last fetch: ${lastSec}s ago · Next refresh in: ${nextSec}s`
+                : "Waiting for first fetch…";
+              return (
+                <span
+                  className="flex items-center gap-2"
+                  title={tooltip}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      error ? "bg-rose-400" : "bg-emerald-400 animate-pulse"
+                    }`}
+                  />
+                  {error ? "Disconnected" : "Live"}
+                </span>
+              );
+            })()}
+            <button
+              onClick={manualRefresh}
+              disabled={manualRefreshing}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-60"
+              aria-label="Refresh now"
+              title="Refresh now"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${manualRefreshing ? "animate-spin" : ""}`} />
+            </button>
             {lastUpdate && (
               <span>Updated {lastUpdate.toLocaleTimeString()}</span>
             )}
@@ -780,6 +843,11 @@ function Dashboard() {
                           <p className="mt-1 text-2xl font-mono font-medium">
                             ${s.price.toFixed(2)}
                           </p>
+                          {(error || !backendHealthy) && (
+                            <p className="mt-0.5 text-[10px] text-amber-400/80">
+                              Showing cached data
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span
