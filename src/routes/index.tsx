@@ -874,7 +874,10 @@ function Dashboard() {
                 Coach
               </TabsTrigger>
             </TabsList>
-          </div>
+                      </div>
+                      <div className="mt-3">
+                        <Sparkline ticker={s.ticker} signal={s.signal} />
+                      </div>
 
           {/* SIGNALS */}
           <TabsContent
