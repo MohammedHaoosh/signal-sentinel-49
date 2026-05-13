@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -217,6 +218,360 @@ function runBacktest(
   };
 }
 
+// ----- Live backtest results from API -----
+
+const RESULTS_URL = "https://iron-condor.duckdns.org/backtest/results";
+
+interface ApiTrade {
+  entry_date: string;
+  exit_date: string;
+  entry_price: number;
+  exit_price: number;
+  pct_return: number;
+  pnl: number;
+}
+interface ApiTickerResult {
+  ticker: string;
+  total_return: number;
+  total_trades: number;
+  win_rate: number;
+  best_trade: number;
+  worst_trade: number;
+  max_drawdown: number;
+  rsi_buy: number;
+  rsi_sell: number;
+  trades: ApiTrade[];
+}
+interface ApiResults {
+  portfolio: {
+    average_win_rate: number;
+    best_ticker: string;
+    best_ticker_return: number;
+    combined_total_return: number;
+  };
+  tickers: Record<string, ApiTickerResult>;
+}
+
+type SortKey = "total_return" | "win_rate" | "max_drawdown";
+type SortDir = "asc" | "desc";
+
+function winRateBadge(wr: number) {
+  if (wr >= 75) return "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30";
+  if (wr >= 50) return "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30";
+  return "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30";
+}
+function returnTone(v: number) {
+  return v >= 0 ? "text-emerald-400" : "text-rose-400";
+}
+function fmtPct(v: number) {
+  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+}
+
+// Parse "AAPL", "AAPL(rsi40)", "AAPL-rsi40" -> { base, variant }
+function parseKey(key: string): { base: string; variant: string } {
+  const m = key.match(/^(.+?)(?:\(([^)]+)\)|-(.+))$/);
+  if (m) return { base: m[1], variant: m[2] ?? m[3] ?? "default" };
+  return { base: key, variant: "default" };
+}
+
+function MiniRunSummary({
+  label,
+  data,
+}: {
+  label: string;
+  data: ApiTickerResult;
+}) {
+  return (
+    <div className="rounded-md border border-zinc-800 bg-zinc-950/60 p-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          {label}
+        </span>
+        <span className="font-mono text-[10px] text-zinc-500">
+          RSI {data.rsi_buy}/{data.rsi_sell}
+        </span>
+      </div>
+      <div className="mt-1.5 grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <div className="text-[10px] text-zinc-500">Return</div>
+          <div className={`font-mono font-semibold ${returnTone(data.total_return)}`}>
+            {fmtPct(data.total_return)}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] text-zinc-500">Win rate</div>
+          <div className="font-mono text-zinc-300">{data.win_rate.toFixed(1)}%</div>
+        </div>
+        <div>
+          <div className="text-[10px] text-zinc-500">Trades</div>
+          <div className="font-mono text-zinc-300">{data.total_trades}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultCard({
+  base,
+  primary,
+  variants,
+}: {
+  base: string;
+  primary: ApiTickerResult;
+  variants: { label: string; data: ApiTickerResult }[];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-lg font-semibold text-zinc-100">{base}</h3>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            {primary.total_trades} trades · RSI {primary.rsi_buy}/{primary.rsi_sell}
+          </p>
+        </div>
+        <span
+          className={`rounded-md px-2 py-1 text-xs font-semibold ${winRateBadge(primary.win_rate)}`}
+        >
+          {primary.win_rate.toFixed(1)}% win
+        </span>
+      </div>
+
+      <div className={`mt-4 text-3xl font-bold font-mono ${returnTone(primary.total_return)}`}>
+        {fmtPct(primary.total_return)}
+      </div>
+
+      <dl className="mt-4 grid grid-cols-3 gap-3 text-xs">
+        <div>
+          <dt className="text-zinc-500">Best trade</dt>
+          <dd className="mt-0.5 font-mono text-emerald-400">{fmtPct(primary.best_trade)}</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Worst trade</dt>
+          <dd className={`mt-0.5 font-mono ${returnTone(primary.worst_trade)}`}>
+            {fmtPct(primary.worst_trade)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Max DD</dt>
+          <dd className="mt-0.5 font-mono text-rose-400">
+            -{primary.max_drawdown.toFixed(2)}%
+          </dd>
+        </div>
+      </dl>
+
+      {variants.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+            RSI threshold comparison
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <MiniRunSummary label={`RSI ${primary.rsi_buy}`} data={primary} />
+            {variants.map((v) => (
+              <MiniRunSummary key={v.label} label={v.label} data={v.data} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="mt-4 flex w-full items-center justify-between rounded-md border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-300 transition hover:bg-zinc-900"
+      >
+        <span>{open ? "Hide trades" : `Show ${primary.trades.length} trades`}</span>
+        <ChevronDown className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="mt-3 max-h-72 overflow-auto rounded-md border border-zinc-800">
+          <table className="w-full text-xs">
+            <thead className="bg-zinc-950 text-[10px] uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th className="px-2 py-2 text-left font-medium">Entry</th>
+                <th className="px-2 py-2 text-left font-medium">Exit</th>
+                <th className="px-2 py-2 text-right font-medium">Entry $</th>
+                <th className="px-2 py-2 text-right font-medium">Exit $</th>
+                <th className="px-2 py-2 text-right font-medium">Return</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {primary.trades.map((t, i) => (
+                <tr key={i}>
+                  <td className="px-2 py-1.5 font-mono text-zinc-400">{t.entry_date}</td>
+                  <td className="px-2 py-1.5 font-mono text-zinc-400">{t.exit_date}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-zinc-300">
+                    ${t.entry_price.toFixed(2)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right font-mono text-zinc-300">
+                    ${t.exit_price.toFixed(2)}
+                  </td>
+                  <td className={`px-2 py-1.5 text-right font-mono font-semibold ${returnTone(t.pct_return)}`}>
+                    {fmtPct(t.pct_return)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LiveBacktestResults() {
+  const [data, setData] = useState<ApiResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("total_return");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(RESULTS_URL, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as ApiResults;
+        if (!cancelled) setData(json);
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : "Failed to fetch");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const grouped = useMemo(() => {
+    if (!data) return [] as { base: string; primary: ApiTickerResult; variants: { label: string; data: ApiTickerResult }[] }[];
+    const map = new Map<string, { primary?: ApiTickerResult; variants: { label: string; data: ApiTickerResult }[] }>();
+    for (const [key, val] of Object.entries(data.tickers)) {
+      const { base, variant } = parseKey(key);
+      const entry = map.get(base) ?? { variants: [] };
+      if (variant === "default") entry.primary = val;
+      else entry.variants.push({ label: `RSI ${val.rsi_buy}`, data: val });
+      map.set(base, entry);
+    }
+    const out: { base: string; primary: ApiTickerResult; variants: { label: string; data: ApiTickerResult }[] }[] = [];
+    for (const [base, entry] of map.entries()) {
+      const primary = entry.primary ?? entry.variants[0]?.data;
+      if (!primary) continue;
+      const variants = entry.primary
+        ? entry.variants
+        : entry.variants.slice(1).map((v) => v);
+      out.push({ base, primary, variants });
+    }
+    return out;
+  }, [data]);
+
+  const sorted = useMemo(() => {
+    const arr = [...grouped];
+    arr.sort((a, b) => {
+      const av = a.primary[sortKey];
+      const bv = b.primary[sortKey];
+      return sortDir === "asc" ? av - bv : bv - av;
+    });
+    return arr;
+  }, [grouped, sortKey, sortDir]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 p-12">
+        <span className="flex items-center gap-3 text-sm text-zinc-400">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-400" />
+          Loading backtest results…
+        </span>
+      </div>
+    );
+  }
+  if (err || !data) {
+    return (
+      <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+        Failed to load backtest results: {err ?? "no data"}
+      </div>
+    );
+  }
+
+  const p = data.portfolio;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-100">Portfolio Summary</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Combined total return
+            </div>
+            <div className={`mt-2 text-3xl font-bold font-mono ${returnTone(p.combined_total_return)}`}>
+              {fmtPct(p.combined_total_return)}
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">across all tickers</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Average win rate
+            </div>
+            <div className="mt-2 text-3xl font-bold font-mono text-zinc-100">
+              {p.average_win_rate.toFixed(1)}%
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">across all tickers</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Best performer
+            </div>
+            <div className="mt-2 flex items-baseline gap-3">
+              <span className="text-2xl font-bold text-zinc-100">{p.best_ticker}</span>
+              <span className={`text-xl font-mono font-semibold ${returnTone(p.best_ticker_return)}`}>
+                {fmtPct(p.best_ticker_return)}
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">top ticker by return</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-zinc-100">Per-ticker results</h2>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-500">Sort by</span>
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className="h-8 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-zinc-100"
+            >
+              <option value="total_return">Total return</option>
+              <option value="win_rate">Win rate</option>
+              <option value="max_drawdown">Max drawdown</option>
+            </select>
+            <button
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              className="h-8 rounded-md border border-zinc-700 bg-zinc-950 px-3 text-zinc-300 hover:bg-zinc-900"
+            >
+              {sortDir === "asc" ? "Asc ↑" : "Desc ↓"}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {sorted.map((g) => (
+            <ResultCard
+              key={g.base}
+              base={g.base}
+              primary={g.primary}
+              variants={g.variants}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Backtest() {
   const [ticker, setTicker] = useState("AAPL");
   const [buyTh, setBuyTh] = useState(30);
@@ -262,6 +617,7 @@ export default function Backtest() {
 
   return (
     <div className="space-y-6">
+      <LiveBacktestResults />
       {/* Config */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
         <h2 className="mb-4 text-lg font-semibold text-zinc-100">
