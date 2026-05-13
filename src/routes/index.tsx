@@ -153,6 +153,103 @@ function scoreBadgeClass(score: number) {
   return "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/40";
 }
 
+// Lightweight inline sparkline derived from a deterministic seed per ticker.
+function Sparkline({ ticker, signal }: { ticker: string; signal: Signal }) {
+  const points = useMemo(() => {
+    let s = 0;
+    for (let i = 0; i < ticker.length; i++) s = (s * 31 + ticker.charCodeAt(i)) >>> 0;
+    const rand = () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+    const N = 40;
+    const arr: number[] = [];
+    let v = 50;
+    const drift = signal === "BUY" ? 0.6 : signal === "SELL" ? -0.6 : 0;
+    for (let i = 0; i < N; i++) {
+      v += (rand() - 0.5) * 6 + drift;
+      arr.push(v);
+    }
+    return arr;
+  }, [ticker, signal]);
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const W = 240;
+  const H = 60;
+  const step = W / (points.length - 1);
+  const path = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)},${(H - ((p - min) / range) * H).toFixed(1)}`)
+    .join(" ");
+  const last = points[points.length - 1];
+  const lastY = H - ((last - min) / range) * H;
+  const stroke =
+    signal === "SELL" ? "#fb7185" : signal === "NEUTRAL" ? "#a1a1aa" : "#34d399";
+  const fillId = `spark-${ticker.replace(/[^a-z0-9]/gi, "")}`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-14 w-full" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={stroke} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${path} L${W},${H} L0,${H} Z`} fill={`url(#${fillId})`} />
+      <path d={path} fill="none" stroke={stroke} strokeWidth="1.5" />
+      <circle cx={W} cy={lastY} r="2.5" fill={stroke} />
+    </svg>
+  );
+}
+
+// Synthesized recent live ticks derived from the current snapshot.
+function LiveTicks({ stocks }: { stocks: Stock[] }) {
+  const ticks = useMemo(() => {
+    if (stocks.length === 0) return [] as { time: string; ticker: string; price: number; delta: number }[];
+    const out: { time: string; ticker: string; price: number; delta: number }[] = [];
+    let s = stocks.reduce((a, x) => a + x.ticker.length, 0) + 1;
+    const rand = () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const st = stocks[Math.floor(rand() * stocks.length)];
+      const t = new Date(now.getTime() - i * (2000 + rand() * 4000));
+      const delta = (rand() - 0.5) * 10;
+      out.push({
+        time: t.toLocaleTimeString([], { hour12: false }),
+        ticker: st.ticker,
+        price: st.price + (rand() - 0.5) * st.price * 0.001,
+        delta,
+      });
+    }
+    return out;
+  }, [stocks]);
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Live Ticks</span>
+        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+      </div>
+      <ul className="space-y-2 font-mono text-xs">
+        {ticks.map((t, i) => {
+          const up = t.delta >= 0;
+          return (
+            <li key={i} className="flex items-center justify-between gap-2">
+              <span className="text-zinc-600">{t.time}</span>
+              <span className="font-semibold text-zinc-300">{t.ticker}</span>
+              <span className="text-zinc-400">${t.price.toFixed(2)}</span>
+              <span className={up ? "text-emerald-400" : "text-rose-400"}>
+                {up ? "▲" : "▼"} {Math.abs(t.delta).toFixed(1)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
