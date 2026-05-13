@@ -111,14 +111,14 @@ const HOT_KEYWORDS = [
   "inflation",
 ];
 
-function rsiColor(rsi: number) {
-  if (rsi < 30) return "text-emerald-400";
-  if (rsi > 70) return "text-rose-400";
+function rsiColor(rsi: number, buy = 30, sell = 70) {
+  if (rsi < buy) return "text-emerald-400";
+  if (rsi > sell) return "text-rose-400";
   return "text-zinc-400";
 }
-function rsiDot(rsi: number) {
-  if (rsi < 30) return "bg-emerald-400";
-  if (rsi > 70) return "bg-rose-400";
+function rsiDot(rsi: number, buy = 30, sell = 70) {
+  if (rsi < buy) return "bg-emerald-400";
+  if (rsi > sell) return "bg-rose-400";
   return "bg-zinc-500";
 }
 function signalStyles(signal: Signal | "BUY" | "SELL" | "STRONG BUY" | "STRONG SELL") {
