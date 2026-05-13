@@ -641,6 +641,95 @@ function Dashboard() {
     };
   }, []);
 
+            {(marketBrief || marketBriefLoading) && (
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 to-zinc-900/40 p-4">
+                <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-400" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-400">
+                      AI Daily Market Brief
+                    </div>
+                    <button
+                      onClick={loadMarketBrief}
+                      disabled={marketBriefLoading}
+                      className="text-[10px] uppercase tracking-wide text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
+                    >
+                      {marketBriefLoading ? "Refreshing…" : "Refresh"}
+                    </button>
+                  </div>
+                  <div className="mt-1 text-sm text-zinc-200">
+                    {marketBrief ?? "Analyzing today's market…"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {stocks.length > 0 && (() => {
+              const fs = stocks.find((x) => x.ticker === featuredTicker) ?? stocks[0];
+              const pct = fs.ma20 ? ((fs.price - fs.ma20) / fs.ma20) * 100 : 0;
+              const pctUp = pct >= 0;
+              return (
+                <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_280px]">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <select
+                        value={fs.ticker}
+                        onChange={(e) => setFeaturedTicker(e.target.value)}
+                        className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                      >
+                        {stocks.map((x) => (
+                          <option key={x.ticker} value={x.ticker}>
+                            {x.ticker} · {displayName(x.ticker)}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-2xl font-mono font-semibold tracking-tight">
+                        ${fs.price.toFixed(2)}
+                      </span>
+                      <span
+                        className={`rounded-md px-2 py-1 text-xs font-mono font-semibold ${
+                          pctUp
+                            ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30"
+                        }`}
+                      >
+                        {pctUp ? "+" : ""}
+                        {pct.toFixed(2)}%
+                      </span>
+                      <span
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide ${signalStyles(
+                          signalLabel(fs.signal, fs.score),
+                        )}`}
+                      >
+                        {signalLabel(fs.signal, fs.score)}
+                      </span>
+                      <div className="ml-auto inline-flex overflow-hidden rounded-md border border-zinc-700 text-xs">
+                        {(["1m", "5m", "15m", "1h"] as const).map((tf) => (
+                          <button
+                            key={tf}
+                            onClick={() => setTimeframe(tf)}
+                            className={`px-3 py-1.5 ${
+                              timeframe === tf
+                                ? "bg-zinc-100 text-zinc-900"
+                                : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+                            }`}
+                          >
+                            {tf}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <CandleChart
+                      ticker={fs.ticker}
+                      price={fs.price}
+                      ma20={fs.ma20}
+                      ma50={fs.ma50}
+                    />
+                  </div>
+                  <LiveTicks stocks={stocks} />
+                </div>
+              );
+            })()}
 
   const visiblePending = pending.filter((p) => p.status === "pending");
 
