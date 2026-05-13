@@ -319,7 +319,9 @@ function Dashboard() {
   const [soundOn, setSoundOn] = useState(true);
   const [activeTab, setActiveTab] = useState("signals");
   const [featuredTicker, setFeaturedTicker] = useState<string>("AAPL");
-  const [timeframe, setTimeframe] = useState<"1m" | "5m" | "15m" | "1h">("5m");
+  const [timeframe, setTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "1d">("15m");
+  const [chartCandles, setChartCandles] = useState<import("@/components/CandleChart").Candle[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
@@ -456,6 +458,44 @@ function Dashboard() {
     const id = setInterval(fetchSignals, 60_000);
     return () => clearInterval(id);
   }, [fetchSignals]);
+
+  // Fetch OHLCV candles for the featured chart whenever ticker or timeframe changes.
+  useEffect(() => {
+    if (!featuredTicker) return;
+    const tfPath = timeframe === "1h" ? "1h" : timeframe === "1d" ? "1d" : "15m";
+    let cancelled = false;
+    setChartLoading(true);
+    fetch(`https://iron-condor.duckdns.org/chart/${encodeURIComponent(featuredTicker)}/${tfPath}`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((raw: Array<{ datetime: string; open: number; high: number; low: number; close: number; volume: number }>) => {
+        if (cancelled) return;
+        const candles = (Array.isArray(raw) ? raw : [])
+          .map((r) => ({
+            time: Math.floor(new Date(r.datetime).getTime() / 1000),
+            open: Number(r.open),
+            high: Number(r.high),
+            low: Number(r.low),
+            close: Number(r.close),
+            volume: Number(r.volume) || 0,
+          }))
+          .filter((c) => Number.isFinite(c.time) && Number.isFinite(c.close));
+        setChartCandles(candles);
+      })
+      .catch(() => {
+        if (!cancelled) setChartCandles([]);
+      })
+      .finally(() => {
+        if (!cancelled) setChartLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [featuredTicker, timeframe]);
 
   const manualRefresh = useCallback(async () => {
     setManualRefreshing(true);
@@ -950,7 +990,7 @@ function Dashboard() {
                         {signalLabel(fs.signal, fs.score)}
                       </span>
                       <div className="ml-auto inline-flex overflow-hidden rounded-md border border-zinc-700 text-xs">
-                        {(["1m", "5m", "15m", "1h"] as const).map((tf) => (
+                        {(["1m", "5m", "15m", "1h", "1d"] as const).map((tf) => (
                           <button
                             key={tf}
                             onClick={() => setTimeframe(tf)}
@@ -960,7 +1000,7 @@ function Dashboard() {
                                 : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
                             }`}
                           >
-                            {tf}
+                            {tf === "1d" ? "1D" : tf}
                           </button>
                         ))}
                       </div>
@@ -970,6 +1010,8 @@ function Dashboard() {
                       price={fs.price}
                       ma20={fs.ma20}
                       ma50={fs.ma50}
+                      candles={chartCandles}
+                      loading={chartLoading}
                     />
                   </div>
                   <LiveTicks stocks={stocks} />
