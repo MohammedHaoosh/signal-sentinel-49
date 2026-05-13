@@ -811,97 +811,45 @@ function Dashboard() {
             ⚠ Backend offline — signals may be stale. Last known data shown.
           </div>
         )}
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Trading Signals
-            </h1>
-            <p className="mt-1 text-sm text-zinc-400">
-              Live market signals · auto-refresh every 60s
-            </p>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-zinc-500">
-            {(() => {
-              const lastMs = lastUpdate ? now - lastUpdate.getTime() : 0;
-              const lastSec = Math.max(0, Math.floor(lastMs / 1000));
-              const nextSec = lastUpdate ? Math.max(0, 60 - lastSec) : 60;
-              const tooltip = lastUpdate
-                ? `Last fetch: ${lastSec}s ago · Next refresh in: ${nextSec}s`
-                : "Waiting for first fetch…";
-              return (
+        <header className="mb-4 flex items-center justify-end gap-3 text-xs text-zinc-500">
+          {(() => {
+            const lastMs = lastUpdate ? now - lastUpdate.getTime() : 0;
+            const lastSec = Math.max(0, Math.floor(lastMs / 1000));
+            const nextSec = lastUpdate ? Math.max(0, 60 - lastSec) : 60;
+            const tooltip = lastUpdate
+              ? `Last fetch: ${lastSec}s ago · Next refresh in: ${nextSec}s`
+              : "Waiting for first fetch…";
+            return (
+              <span className="flex items-center gap-2" title={tooltip}>
                 <span
-                  className="flex items-center gap-2"
-                  title={tooltip}
-                >
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      error ? "bg-rose-400" : "bg-emerald-400 animate-pulse"
-                    }`}
-                  />
-                  {error ? "Disconnected" : "Live"}
-                </span>
-              );
-            })()}
-            <button
-              onClick={manualRefresh}
-              disabled={manualRefreshing}
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-60"
-              aria-label="Refresh now"
-              title="Refresh now"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${manualRefreshing ? "animate-spin" : ""}`} />
-            </button>
-            {lastUpdate && (
-              <span>Updated {lastUpdate.toLocaleTimeString()}</span>
-            )}
-            <button
-              onClick={toggleSound}
-              className="rounded-md border border-zinc-700 bg-zinc-900 p-1.5 text-zinc-300 hover:bg-zinc-800"
-              aria-label="Toggle sound"
-              title={soundOn ? "Sound on" : "Sound off"}
-            >
-              {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-            </button>
-            <ThemeSwitcher />
-          </div>
+                  className={`h-2 w-2 rounded-full ${
+                    error ? "bg-rose-400" : "bg-emerald-400 animate-pulse"
+                  }`}
+                />
+                {error ? "Disconnected" : "Live"}
+              </span>
+            );
+          })()}
+          <button
+            onClick={manualRefresh}
+            disabled={manualRefreshing}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-60"
+            aria-label="Refresh now"
+            title="Refresh now"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${manualRefreshing ? "animate-spin" : ""}`} />
+          </button>
+          {lastUpdate && <span>Updated {lastUpdate.toLocaleTimeString()}</span>}
+          <button
+            onClick={toggleSound}
+            className="rounded-md border border-zinc-700 bg-zinc-900 p-1.5 text-zinc-300 hover:bg-zinc-800"
+            aria-label="Toggle sound"
+            title={soundOn ? "Sound on" : "Sound off"}
+          >
+            {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+          </button>
+          <ThemeSwitcher />
         </header>
-
-        {(marketBrief || marketBriefLoading) && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 to-zinc-900/40 p-4">
-            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-400" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-400">
-                  AI Daily Market Brief
-                </div>
-                <button
-                  onClick={loadMarketBrief}
-                  disabled={marketBriefLoading}
-                  className="text-[10px] uppercase tracking-wide text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
-                >
-                  {marketBriefLoading ? "Refreshing…" : "Refresh"}
-                </button>
-              </div>
-              <div className="mt-1 text-sm text-zinc-200">
-                {marketBrief ?? "Analyzing today's market…"}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {(insight || insightLoading) && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-zinc-900/40 p-4">
-            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
-                Otto's Weekly Insight
-              </div>
-              <div className="mt-1 text-sm text-zinc-200">
-                {insight ?? "Analyzing your week…"}
-              </div>
-            </div>
-          </div>
-        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="sticky top-0 z-30 -mx-6 mb-6 border-b border-zinc-800/80 bg-zinc-950/85 px-6 py-3 backdrop-blur">
