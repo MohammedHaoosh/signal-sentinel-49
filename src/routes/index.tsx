@@ -60,6 +60,8 @@ interface Stock {
   signal: Signal;
   score?: number;
   reasons?: string[];
+  rsi_buy?: number;
+  rsi_sell?: number;
 }
 
 interface PendingTrade extends Stock {
@@ -109,14 +111,14 @@ const HOT_KEYWORDS = [
   "inflation",
 ];
 
-function rsiColor(rsi: number) {
-  if (rsi < 30) return "text-emerald-400";
-  if (rsi > 70) return "text-rose-400";
+function rsiColor(rsi: number, buy = 30, sell = 70) {
+  if (rsi < buy) return "text-emerald-400";
+  if (rsi > sell) return "text-rose-400";
   return "text-zinc-400";
 }
-function rsiDot(rsi: number) {
-  if (rsi < 30) return "bg-emerald-400";
-  if (rsi > 70) return "bg-rose-400";
+function rsiDot(rsi: number, buy = 30, sell = 70) {
+  if (rsi < buy) return "bg-emerald-400";
+  if (rsi > sell) return "bg-rose-400";
   return "bg-zinc-500";
 }
 function signalStyles(signal: Signal | "BUY" | "SELL" | "STRONG BUY" | "STRONG SELL") {
@@ -903,12 +905,17 @@ function Dashboard() {
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">RSI</span>
                           <span className="flex items-center gap-2">
-                            <span className={`h-2 w-2 rounded-full ${rsiDot(s.rsi)}`} />
-                            <span className={`font-mono font-medium ${rsiColor(s.rsi)}`}>
+                            <span className={`h-2 w-2 rounded-full ${rsiDot(s.rsi, s.rsi_buy, s.rsi_sell)}`} />
+                            <span className={`font-mono font-medium ${rsiColor(s.rsi, s.rsi_buy, s.rsi_sell)}`}>
                               {s.rsi.toFixed(1)}
                             </span>
                           </span>
                         </div>
+                        {(typeof s.rsi_buy === "number" || typeof s.rsi_sell === "number") && (
+                          <div className="-mt-1.5 text-right text-[11px] text-zinc-500">
+                            Buy threshold: {typeof s.rsi_buy === "number" ? s.rsi_buy.toFixed(0) : "—"} · Sell threshold: {typeof s.rsi_sell === "number" ? s.rsi_sell.toFixed(0) : "—"}
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">MA20</span>
                           <span className="font-mono text-zinc-300">
