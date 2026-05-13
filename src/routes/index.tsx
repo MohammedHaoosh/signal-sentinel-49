@@ -319,7 +319,9 @@ function Dashboard() {
   const [soundOn, setSoundOn] = useState(true);
   const [activeTab, setActiveTab] = useState("signals");
   const [featuredTicker, setFeaturedTicker] = useState<string>("AAPL");
-  const [timeframe, setTimeframe] = useState<"1m" | "5m" | "15m" | "1h">("5m");
+  const [timeframe, setTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "1d">("15m");
+  const [chartCandles, setChartCandles] = useState<import("@/components/CandleChart").Candle[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
