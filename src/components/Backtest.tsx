@@ -617,6 +617,7 @@ export default function Backtest() {
 
   return (
     <div className="space-y-6">
+      <LiveBacktestResults />
       {/* Config */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
         <h2 className="mb-4 text-lg font-semibold text-zinc-100">
