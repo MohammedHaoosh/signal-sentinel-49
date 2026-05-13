@@ -990,7 +990,7 @@ function Dashboard() {
                         {signalLabel(fs.signal, fs.score)}
                       </span>
                       <div className="ml-auto inline-flex overflow-hidden rounded-md border border-zinc-700 text-xs">
-                        {(["1m", "5m", "15m", "1h"] as const).map((tf) => (
+                        {(["1m", "5m", "15m", "1h", "1d"] as const).map((tf) => (
                           <button
                             key={tf}
                             onClick={() => setTimeframe(tf)}
@@ -1000,7 +1000,7 @@ function Dashboard() {
                                 : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
                             }`}
                           >
-                            {tf}
+                            {tf === "1d" ? "1D" : tf}
                           </button>
                         ))}
                       </div>
@@ -1010,6 +1010,8 @@ function Dashboard() {
                       price={fs.price}
                       ma20={fs.ma20}
                       ma50={fs.ma50}
+                      candles={chartCandles}
+                      loading={chartLoading}
                     />
                   </div>
                   <LiveTicks stocks={stocks} />
