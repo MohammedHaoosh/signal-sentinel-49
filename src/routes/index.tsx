@@ -905,12 +905,17 @@ function Dashboard() {
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">RSI</span>
                           <span className="flex items-center gap-2">
-                            <span className={`h-2 w-2 rounded-full ${rsiDot(s.rsi)}`} />
-                            <span className={`font-mono font-medium ${rsiColor(s.rsi)}`}>
+                            <span className={`h-2 w-2 rounded-full ${rsiDot(s.rsi, s.rsi_buy, s.rsi_sell)}`} />
+                            <span className={`font-mono font-medium ${rsiColor(s.rsi, s.rsi_buy, s.rsi_sell)}`}>
                               {s.rsi.toFixed(1)}
                             </span>
                           </span>
                         </div>
+                        {(typeof s.rsi_buy === "number" || typeof s.rsi_sell === "number") && (
+                          <div className="-mt-1.5 text-right text-[11px] text-zinc-500">
+                            Buy threshold: {typeof s.rsi_buy === "number" ? s.rsi_buy.toFixed(0) : "—"} · Sell threshold: {typeof s.rsi_sell === "number" ? s.rsi_sell.toFixed(0) : "—"}
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">MA20</span>
                           <span className="font-mono text-zinc-300">
