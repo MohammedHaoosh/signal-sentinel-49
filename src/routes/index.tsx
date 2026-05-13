@@ -60,6 +60,8 @@ interface Stock {
   signal: Signal;
   score?: number;
   reasons?: string[];
+  rsi_buy?: number;
+  rsi_sell?: number;
 }
 
 interface PendingTrade extends Stock {
