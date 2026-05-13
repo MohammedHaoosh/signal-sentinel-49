@@ -280,9 +280,20 @@ function Dashboard() {
         headers: { "ngrok-skip-browser-warning": "true" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: Stock[] = await res.json();
+      const raw: any[] = await res.json();
+      const data: Stock[] = (Array.isArray(raw) ? raw : []).filter(
+        (s) =>
+          s &&
+          typeof s.ticker === "string" &&
+          typeof s.price === "number" &&
+          typeof s.rsi === "number" &&
+          typeof s.ma20 === "number" &&
+          typeof s.ma50 === "number" &&
+          typeof s.signal === "string",
+      );
+      const skipped = (Array.isArray(raw) ? raw.length : 0) - data.length;
       setStocks(data);
-      setError(null);
+      setError(skipped > 0 && data.length === 0 ? "Backend returned no usable signals" : null);
       const now = new Date();
       setLastUpdate(now);
 
