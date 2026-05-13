@@ -1036,7 +1036,10 @@ function Dashboard() {
                           )}
                         </div>
                       </div>
-                      <div className="mt-5 space-y-2.5 text-sm">
+                      <div className="mt-3">
+                        <Sparkline ticker={s.ticker} signal={s.signal} />
+                      </div>
+                      <div className="mt-4 space-y-2.5 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">RSI</span>
                           <span className="flex items-center gap-2">
