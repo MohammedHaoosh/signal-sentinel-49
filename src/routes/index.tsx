@@ -990,7 +990,11 @@ function Dashboard() {
                         {signalLabel(fs.signal, fs.score)}
                       </span>
                       <div className="ml-auto inline-flex overflow-hidden rounded-md border border-zinc-700 text-xs">
-                        {(["1m", "5m", "15m", "1h", "1d"] as const).map((tf) => (
+                        {([
+                          { tf: "15m", label: "15m" },
+                          { tf: "1h", label: "Daily (1Y)" },
+                          { tf: "1d", label: "Daily (Max)" },
+                        ] as const).map(({ tf, label }) => (
                           <button
                             key={tf}
                             onClick={() => setTimeframe(tf)}
@@ -1000,7 +1004,7 @@ function Dashboard() {
                                 : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
                             }`}
                           >
-                            {tf === "1d" ? "1D" : tf}
+                            {label}
                           </button>
                         ))}
                       </div>
