@@ -933,6 +933,7 @@ function Dashboard() {
                 <Sparkles className="mr-1 h-3 w-3" />
                 Coach
               </TabsTrigger>
+              <TabsTrigger value="paper">Paper Trading</TabsTrigger>
             </TabsList>
           </div>
 
