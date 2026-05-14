@@ -446,6 +446,7 @@ function Dashboard() {
         }));
         return [...additions, ...prev].slice(0, 50);
       });
+      setSignalsTick((n) => n + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to fetch");
     } finally {
