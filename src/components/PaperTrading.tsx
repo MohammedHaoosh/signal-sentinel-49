@@ -57,7 +57,7 @@ const pnlColor = (n: number) =>
   n > 0 ? "text-emerald-400" : n < 0 ? "text-red-400" : "text-zinc-300";
 const isShort = (d: string) => /short|sell/i.test(d);
 
-export default function PaperTrading({ livePrices }: Props) {
+export default function PaperTrading({ livePrices, refreshSignal }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [trades, setTrades] = useState<Trade[] | null>(null);
   const [closingId, setClosingId] = useState<number | null>(null);
@@ -83,6 +83,10 @@ export default function PaperTrading({ livePrices }: Props) {
     const id = setInterval(refresh, 60_000);
     return () => clearInterval(id);
   }, [refresh]);
+
+  useEffect(() => {
+    if (refreshSignal) refresh();
+  }, [refreshSignal, refresh]);
 
   const closePosition = async (id: number) => {
     setClosingId(id);
