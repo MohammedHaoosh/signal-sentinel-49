@@ -147,7 +147,7 @@ export default function PaperTrading({ livePrices }: Props) {
               No open positions yet. Approve a signal to get started.
             </p>
           ) : (
-            <Table>
+            <Table className="text-zinc-200">
               <TableHeader>
                 <TableRow className="border-zinc-800 hover:bg-transparent">
                   <TableHead>Ticker</TableHead>
@@ -212,7 +212,7 @@ export default function PaperTrading({ livePrices }: Props) {
           ) : closed.length === 0 ? (
             <p className="py-8 text-center text-sm text-zinc-400">No closed trades yet.</p>
           ) : (
-            <Table>
+            <Table className="text-zinc-200">
               <TableHeader>
                 <TableRow className="border-zinc-800 hover:bg-transparent">
                   <TableHead className="w-8" />
