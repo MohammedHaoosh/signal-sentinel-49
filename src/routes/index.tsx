@@ -591,6 +591,7 @@ function Dashboard() {
   const postTradeDecision = async (
     trade: PendingTrade,
     decision: "confirm" | "reject",
+    overridePct?: number,
   ) => {
     if (decision === "confirm") {
       const key = tradeKey(trade);
@@ -598,23 +599,43 @@ function Dashboard() {
       confirmedKeysRef.current.add(key);
     }
     try {
-      const res = await fetch(`${TRADES_BASE}/${decision}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-        body: JSON.stringify({
-          ticker: trade.ticker,
-          price: trade.price,
-          signal: trade.signal,
-          rsi: trade.rsi,
-          ma20: trade.ma20,
-          ma50: trade.ma50,
-          timestamp: Date.now(),
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (decision === "confirm") {
+        const direction = trade.signal === "BUY" ? "BUY" : "SELL";
+        const res = await fetch(`https://iron-condor.duckdns.org/paper/open`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({
+            ticker: trade.ticker,
+            direction,
+            score: trade.score,
+            approved_via: "dashboard",
+            override_pct: overridePct ?? 100,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setPaperRefreshTick((n) => n + 1);
+      } else {
+        const res = await fetch(`${TRADES_BASE}/reject`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify({
+            ticker: trade.ticker,
+            price: trade.price,
+            signal: trade.signal,
+            rsi: trade.rsi,
+            ma20: trade.ma20,
+            ma50: trade.ma50,
+            timestamp: Date.now(),
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      }
     } catch {
       flashWarning("Decision saved locally only — backend sync failed.");
     }
