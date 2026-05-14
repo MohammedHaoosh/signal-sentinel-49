@@ -287,7 +287,7 @@ export default function PaperTrading({ livePrices }: Props) {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </TableBody>
