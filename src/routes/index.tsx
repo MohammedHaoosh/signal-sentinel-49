@@ -1302,19 +1302,38 @@ function Dashboard() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => decide(p.id, "confirmed")}
-                                  className="rounded-md bg-emerald-500/15 px-4 py-1.5 text-sm font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
-                                >
-                                  Confirm
-                                </button>
-                                <button
-                                  onClick={() => decide(p.id, "rejected")}
-                                  className="rounded-md bg-rose-500/15 px-4 py-1.5 text-sm font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
-                                >
-                                  Reject
-                                </button>
+                              <div className="flex flex-col items-end gap-2 min-w-[180px]">
+                                <div className="w-full">
+                                  <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
+                                    <span>Size</span>
+                                    <span className="font-mono text-zinc-300">{sizePctById[p.id] ?? 100}%</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min={0}
+                                    max={150}
+                                    step={5}
+                                    value={sizePctById[p.id] ?? 100}
+                                    onChange={(e) =>
+                                      setSizePctById((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))
+                                    }
+                                    className="w-full accent-emerald-500"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => decide(p.id, "confirmed")}
+                                    className="rounded-md bg-emerald-500/15 px-4 py-1.5 text-sm font-medium text-emerald-400 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25"
+                                  >
+                                    Confirm
+                                  </button>
+                                  <button
+                                    onClick={() => decide(p.id, "rejected")}
+                                    className="rounded-md bg-rose-500/15 px-4 py-1.5 text-sm font-medium text-rose-400 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
                               </div>
                             </div>
                             {p.reasons && p.reasons.length > 0 && (
