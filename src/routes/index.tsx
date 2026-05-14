@@ -645,7 +645,8 @@ function Dashboard() {
     setPending((prev) => {
       const trade = prev.find((p) => p.id === id);
       if (trade) {
-        void postTradeDecision(trade, status === "confirmed" ? "confirm" : "reject");
+        const overridePct = sizePctById[id] ?? 100;
+        void postTradeDecision(trade, status === "confirmed" ? "confirm" : "reject", overridePct);
       }
       if (trade && status === "confirmed") {
         setConfirmed((c) => [
