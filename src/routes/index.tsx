@@ -322,6 +322,7 @@ function Dashboard() {
   const [timeframe, setTimeframe] = useState<"15m" | "1h" | "1d">("15m");
   const [chartCandles, setChartCandles] = useState<import("@/components/CandleChart").Candle[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
+  const [signalsTick, setSignalsTick] = useState(0);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [sentiment, setSentiment] = useState<Map<string, SentimentResult>>(new Map());
