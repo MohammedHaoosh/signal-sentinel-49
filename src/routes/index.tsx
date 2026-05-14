@@ -1303,23 +1303,33 @@ function Dashboard() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-2 min-w-[180px]">
-                                <div className="w-full">
-                                  <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
-                                    <span>Size</span>
-                                    <span className="font-mono text-zinc-300">{sizePctById[p.id] ?? 100}%</span>
-                                  </div>
-                                  <input
-                                    type="range"
-                                    min={0}
-                                    max={150}
-                                    step={5}
-                                    value={sizePctById[p.id] ?? 100}
-                                    onChange={(e) =>
-                                      setSizePctById((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))
-                                    }
-                                    className="w-full accent-emerald-500"
-                                  />
-                                </div>
+                                {(() => {
+                                  const pct = sizePctById[p.id] ?? 100;
+                                  const over = pct > 100;
+                                  return (
+                                    <div className="w-full">
+                                      <div className="flex justify-between text-[11px] mb-1">
+                                        <span className={over ? "text-rose-400 font-medium" : "text-zinc-400"}>
+                                          {over ? "Exceeding suggested size" : "Size"}
+                                        </span>
+                                        <span className={`font-mono ${over ? "text-rose-400" : "text-zinc-300"}`}>
+                                          {pct}%
+                                        </span>
+                                      </div>
+                                      <input
+                                        type="range"
+                                        min={0}
+                                        max={150}
+                                        step={5}
+                                        value={pct}
+                                        onChange={(e) =>
+                                          setSizePctById((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))
+                                        }
+                                        className={`w-full ${over ? "accent-rose-500" : "accent-emerald-500"}`}
+                                      />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => decide(p.id, "confirmed")}
