@@ -46,6 +46,7 @@ interface Trade {
 
 interface Props {
   livePrices: Record<string, number>;
+  refreshSignal?: number;
 }
 
 const fmtUsd = (n: number) =>
