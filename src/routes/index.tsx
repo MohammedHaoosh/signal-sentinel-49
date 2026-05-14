@@ -1759,6 +1759,15 @@ function Dashboard() {
           </TabsContent>
 
           <TabsContent
+            value="paper"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <PaperTrading
+              livePrices={Object.fromEntries(stocks.map((s) => [s.ticker, s.price]))}
+            />
+          </TabsContent>
+
+          <TabsContent
             value="coach"
             className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
           >
