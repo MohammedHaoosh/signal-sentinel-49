@@ -461,43 +461,60 @@ function Dashboard() {
     return () => clearInterval(id);
   }, [fetchSignals]);
 
-  // Fetch OHLCV candles for the featured chart whenever ticker or timeframe changes.
-  useEffect(() => {
-    if (!featuredTicker) return;
-    const tfPath = timeframe === "1h" ? "1h" : timeframe === "1d" ? "1d" : "15m";
-    let cancelled = false;
-    setChartLoading(true);
-    fetch(`https://iron-condor.duckdns.org/chart/${encodeURIComponent(featuredTicker)}/${tfPath}`, {
-      headers: { "ngrok-skip-browser-warning": "true" },
-    })
-      .then((r) => {
+  // Fetch OHLCV candles for the featured chart. Auto-refreshes every 60s and
+  // whenever signals refresh, with no spinner flash on background updates.
+  const fetchChartCandles = useCallback(
+    async (opts?: { showSpinner?: boolean }) => {
+      if (!featuredTicker) return;
+      const tfPath = timeframe === "1h" ? "1h" : timeframe === "1d" ? "1d" : "15m";
+      if (opts?.showSpinner) setChartLoading(true);
+      try {
+        const r = await fetch(
+          `https://iron-condor.duckdns.org/chart/${encodeURIComponent(featuredTicker)}/${tfPath}`,
+          { headers: { "ngrok-skip-browser-warning": "true" } },
+        );
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((raw: Array<{ datetime: string; open: number; high: number; low: number; close: number; volume: number }>) => {
-        if (cancelled) return;
+        const raw = (await r.json()) as Array<{
+          datetime: string;
+          open: number;
+          high: number;
+          low: number;
+          close: number;
+          volume: number;
+        }>;
         const candles = (Array.isArray(raw) ? raw : [])
-          .map((r) => ({
-            time: Math.floor(new Date(r.datetime).getTime() / 1000),
-            open: Number(r.open),
-            high: Number(r.high),
-            low: Number(r.low),
-            close: Number(r.close),
-            volume: Number(r.volume) || 0,
+          .map((c) => ({
+            time: Math.floor(new Date(c.datetime).getTime() / 1000),
+            open: Number(c.open),
+            high: Number(c.high),
+            low: Number(c.low),
+            close: Number(c.close),
+            volume: Number(c.volume) || 0,
           }))
           .filter((c) => Number.isFinite(c.time) && Number.isFinite(c.close));
         setChartCandles(candles);
-      })
-      .catch(() => {
-        if (!cancelled) setChartCandles([]);
-      })
-      .finally(() => {
-        if (!cancelled) setChartLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [featuredTicker, timeframe]);
+      } catch {
+        if (opts?.showSpinner) setChartCandles([]);
+      } finally {
+        if (opts?.showSpinner) setChartLoading(false);
+      }
+    },
+    [featuredTicker, timeframe],
+  );
+
+  // Initial load (with spinner) on ticker/timeframe change + 60s auto-refresh.
+  useEffect(() => {
+    if (!featuredTicker) return;
+    fetchChartCandles({ showSpinner: true });
+    const id = setInterval(() => fetchChartCandles(), 60_000);
+    return () => clearInterval(id);
+  }, [fetchChartCandles, featuredTicker]);
+
+  // Keep the chart in sync with signal refreshes (silent background update).
+  useEffect(() => {
+    if (signalsTick === 0) return;
+    fetchChartCandles();
+  }, [signalsTick, fetchChartCandles]);
 
   const manualRefresh = useCallback(async () => {
     setManualRefreshing(true);
