@@ -313,6 +313,8 @@ function Dashboard() {
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
   const confirmedKeysRef = useRef<Set<string>>(new Set());
   const [bulkDisabled, setBulkDisabled] = useState(false);
+  const [sizePctById, setSizePctById] = useState<Record<string, number>>({});
+  const [paperRefreshTick, setPaperRefreshTick] = useState(0);
   const tradeKey = (t: { ticker: string; signal: string; price: number }) =>
     `${t.ticker}|${t.signal}|${t.price}`;
 
