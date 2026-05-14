@@ -118,6 +118,35 @@ export default function PaperTrading({ livePrices, refreshSignal }: Props) {
     }
   };
 
+  const [manualOpen, setManualOpen] = useState(false);
+  const [mTicker, setMTicker] = useState(TICKERS[0]);
+  const [mDirection, setMDirection] = useState<"BUY" | "SELL">("BUY");
+  const [mScore, setMScore] = useState<number>(7);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitManual = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}/paper/open`, {
+        method: "POST",
+        headers: { ...HEADERS, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker: mTicker,
+          direction: mDirection,
+          score: mScore,
+          approved_via: "dashboard",
+        }),
+      });
+      if (!res.ok) throw new Error(`Open failed: ${res.status}`);
+      setManualOpen(false);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to open trade");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const { open, closed } = useMemo(() => {
     const list = trades ?? [];
     return {
