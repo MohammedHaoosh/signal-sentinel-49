@@ -22,6 +22,7 @@ import Scanner from "@/components/Scanner";
 import Analytics from "@/components/Analytics";
 import Coach from "@/components/Coach";
 import CandleChart from "@/components/CandleChart";
+import PaperTrading from "@/components/PaperTrading";
 import CompareChart from "@/components/CompareChart";
 import TickerTape from "@/components/TickerTape";
 import Otto from "@/components/Otto";
@@ -932,6 +933,7 @@ function Dashboard() {
                 <Sparkles className="mr-1 h-3 w-3" />
                 Coach
               </TabsTrigger>
+              <TabsTrigger value="paper">Paper Trading</TabsTrigger>
             </TabsList>
           </div>
 
@@ -1753,6 +1755,15 @@ function Dashboard() {
               confirmed={confirmed}
               rejectedCount={rejectedCount}
               history={history}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="paper"
+            className="data-[state=active]:animate-in data-[state=active]:fade-in-50 data-[state=active]:slide-in-from-bottom-1"
+          >
+            <PaperTrading
+              livePrices={Object.fromEntries(stocks.map((s) => [s.ticker, s.price]))}
             />
           </TabsContent>
 
