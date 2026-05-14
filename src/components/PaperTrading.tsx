@@ -147,7 +147,7 @@ export default function PaperTrading({ livePrices }: Props) {
               No open positions yet. Approve a signal to get started.
             </p>
           ) : (
-            <Table>
+            <Table className="text-zinc-200">
               <TableHeader>
                 <TableRow className="border-zinc-800 hover:bg-transparent">
                   <TableHead>Ticker</TableHead>
@@ -168,8 +168,8 @@ export default function PaperTrading({ livePrices }: Props) {
                   const upnl = (current - t.entry_price) * t.quantity * sign;
                   return (
                     <TableRow key={t.id} className="border-zinc-800">
-                      <TableCell className="font-medium">{t.ticker}</TableCell>
-                      <TableCell className="uppercase text-xs">{t.direction}</TableCell>
+                      <TableCell className="font-medium text-zinc-100">{t.ticker}</TableCell>
+                      <TableCell className="uppercase text-xs text-zinc-200">{t.direction}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtUsd(t.entry_price)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtUsd(current)}</TableCell>
                       <TableCell className={`text-right tabular-nums ${pnlColor(upnl)}`}>
@@ -212,7 +212,7 @@ export default function PaperTrading({ livePrices }: Props) {
           ) : closed.length === 0 ? (
             <p className="py-8 text-center text-sm text-zinc-400">No closed trades yet.</p>
           ) : (
-            <Table>
+            <Table className="text-zinc-200">
               <TableHeader>
                 <TableRow className="border-zinc-800 hover:bg-transparent">
                   <TableHead className="w-8" />
@@ -251,8 +251,8 @@ export default function PaperTrading({ livePrices }: Props) {
                             </button>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{t.ticker}</TableCell>
-                        <TableCell className="uppercase text-xs">{t.direction}</TableCell>
+                        <TableCell className="font-medium text-zinc-100">{t.ticker}</TableCell>
+                        <TableCell className="uppercase text-xs text-zinc-200">{t.direction}</TableCell>
                         <TableCell className="text-right tabular-nums">{fmtUsd(t.entry_price)}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           {t.exit_price != null ? fmtUsd(t.exit_price) : "—"}
