@@ -22,6 +22,7 @@ import Scanner from "@/components/Scanner";
 import Analytics from "@/components/Analytics";
 import Coach from "@/components/Coach";
 import CandleChart from "@/components/CandleChart";
+import PaperTrading from "@/components/PaperTrading";
 import CompareChart from "@/components/CompareChart";
 import TickerTape from "@/components/TickerTape";
 import Otto from "@/components/Otto";
