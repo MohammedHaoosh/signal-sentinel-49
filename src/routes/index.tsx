@@ -1764,6 +1764,7 @@ function Dashboard() {
           >
             <PaperTrading
               livePrices={Object.fromEntries(stocks.map((s) => [s.ticker, s.price]))}
+              refreshSignal={lastUpdate?.getTime() ?? 0}
             />
           </TabsContent>
 
