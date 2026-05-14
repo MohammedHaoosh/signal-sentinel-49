@@ -10,10 +10,28 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const BASE = "https://iron-condor.duckdns.org";
 const HEADERS = { "ngrok-skip-browser-warning": "true" };
+const TICKERS = ["AAPL", "MSFT", "AMZN", "TSLA", "NVDA", "SPY", "AMD", "PLTR", "BTC-USD", "GC=F"];
 
 interface Summary {
   current_balance: number;
@@ -100,6 +118,35 @@ export default function PaperTrading({ livePrices, refreshSignal }: Props) {
     }
   };
 
+  const [manualOpen, setManualOpen] = useState(false);
+  const [mTicker, setMTicker] = useState(TICKERS[0]);
+  const [mDirection, setMDirection] = useState<"BUY" | "SELL">("BUY");
+  const [mScore, setMScore] = useState<number>(7);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitManual = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}/paper/open`, {
+        method: "POST",
+        headers: { ...HEADERS, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker: mTicker,
+          direction: mDirection,
+          score: mScore,
+          approved_via: "dashboard",
+        }),
+      });
+      if (!res.ok) throw new Error(`Open failed: ${res.status}`);
+      setManualOpen(false);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to open trade");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const { open, closed } = useMemo(() => {
     const list = trades ?? [];
     return {
@@ -117,6 +164,67 @@ export default function PaperTrading({ livePrices, refreshSignal }: Props) {
           {error}
         </div>
       )}
+
+      <div className="flex justify-end">
+        <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40 hover:bg-emerald-500/30">
+              <Plus className="h-4 w-4" /> Manual Trade
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100">
+            <DialogHeader>
+              <DialogTitle>Open Manual Paper Trade</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Ticker</Label>
+                <Select value={mTicker} onValueChange={setMTicker}>
+                  <SelectTrigger className="border-zinc-700 bg-zinc-950 text-zinc-100">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
+                    {TICKERS.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Direction</Label>
+                <Select value={mDirection} onValueChange={(v) => setMDirection(v as "BUY" | "SELL")}>
+                  <SelectTrigger className="border-zinc-700 bg-zinc-950 text-zinc-100">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-zinc-700 bg-zinc-900 text-zinc-100">
+                    <SelectItem value="BUY">BUY</SelectItem>
+                    <SelectItem value="SELL">SELL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Score (1-10)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={mScore}
+                  onChange={(e) => setMScore(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
+                  className="border-zinc-700 bg-zinc-950 text-zinc-100"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setManualOpen(false)} disabled={submitting} className="text-zinc-300">
+                Cancel
+              </Button>
+              <Button onClick={submitManual} disabled={submitting} className="bg-emerald-500 text-zinc-950 hover:bg-emerald-400">
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Open Trade"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
