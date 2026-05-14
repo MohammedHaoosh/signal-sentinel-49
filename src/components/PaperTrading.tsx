@@ -251,8 +251,8 @@ export default function PaperTrading({ livePrices }: Props) {
                             </button>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{t.ticker}</TableCell>
-                        <TableCell className="uppercase text-xs">{t.direction}</TableCell>
+                        <TableCell className="font-medium text-zinc-100">{t.ticker}</TableCell>
+                        <TableCell className="uppercase text-xs text-zinc-200">{t.direction}</TableCell>
                         <TableCell className="text-right tabular-nums">{fmtUsd(t.entry_price)}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           {t.exit_price != null ? fmtUsd(t.exit_price) : "—"}
