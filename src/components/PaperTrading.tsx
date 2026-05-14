@@ -234,7 +234,7 @@ export default function PaperTrading({ livePrices }: Props) {
                   const isOpen = !!expanded[t.id];
                   const hasNotes = !!(t.notes || t.trader_notes);
                   return (
-                    <>
+                    <Fragment key={t.id}>
                       <TableRow key={t.id} className="border-zinc-800">
                         <TableCell>
                           {hasNotes && (
