@@ -198,7 +198,18 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
     chart.subscribeCrosshairMove(onMove);
 
     requestAnimationFrame(() => {
-      chart.timeScale().fitContent();
+      if (timeframe === "1d?range=max") {
+        chart.timeScale().fitContent();
+      } else if (timeframe === "1d?range=1y") {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        chart.timeScale().setVisibleRange({
+          from: oneYearAgo.toISOString().split("T")[0] as unknown as Time,
+          to: new Date().toISOString().split("T")[0] as unknown as Time,
+        });
+      } else {
+        chart.timeScale().fitContent();
+      }
     });
 
     const ro = new ResizeObserver(() => {
