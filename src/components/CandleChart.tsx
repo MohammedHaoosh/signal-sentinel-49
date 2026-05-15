@@ -33,6 +33,7 @@ interface Props {
   candles?: Candle[];
   markers?: ChartMarker[];
   loading?: boolean;
+  timeframe?: string;
 }
 
 // Synthesize a deterministic 30-bar OHLC series anchored on the snapshot values.
