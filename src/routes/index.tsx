@@ -42,7 +42,7 @@ import {
 import { fetchNews, type NewsArticle } from "@/lib/news.functions";
 import { classifyHeadlines, type SentimentResult } from "@/lib/sentiment.functions";
 import { weeklyInsight } from "@/lib/coach.functions";
-import { explainSignal, marketSummary } from "@/lib/ai.functions";
+import { marketSummary } from "@/lib/ai.functions";
 import { detectPatterns } from "@/lib/patterns";
 import { sounds, setSoundEnabled, loadSoundPref } from "@/lib/sounds";
 
@@ -333,7 +333,7 @@ function Dashboard() {
   const prevSignalsRef = useRef<Map<string, string>>(new Map());
   const weeklyInsightFn = useServerFn(weeklyInsight);
   const classifyFn = useServerFn(classifyHeadlines);
-  const explainSignalFn = useServerFn(explainSignal);
+  
   const marketSummaryFn = useServerFn(marketSummary);
 
   // Ask AI modal
@@ -895,24 +895,22 @@ function Dashboard() {
       setAskText("");
       setAskError(null);
       setAskLoading(true);
-      explainSignalFn({
-        data: {
-          ticker: s.ticker,
-          price: s.price,
-          rsi: s.rsi,
-          ma20: s.ma20,
-          ma50: s.ma50,
-          signal: s.signal,
+      const credentials = btoa("iron-condor:Xk9#mP2$vL7qN4wR");
+      fetch(`https://iron-condor.duckdns.org/insight/${encodeURIComponent(s.ticker)}`, {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "ngrok-skip-browser-warning": "true",
         },
       })
-        .then((res) => {
-          if (res.error) setAskError(res.error);
-          else setAskText(res.explanation);
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
         })
+        .then((data) => setAskText(data.insight ?? "No insight available"))
         .catch((e) => setAskError(e instanceof Error ? e.message : "Failed"))
         .finally(() => setAskLoading(false));
     },
-    [explainSignalFn],
+    [],
   );
 
   const toggleSound = () => {
