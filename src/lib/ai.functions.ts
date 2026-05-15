@@ -1,5 +1,5 @@
 const BASE = "https://iron-condor.duckdns.org";
-const BASIC_AUTH = "Basic " + btoa("iron-condor:Xk9#mP2$vL7qN4wR");
+const credentials = btoa("iron-condor:Xk9#mP2$vL7qN4wR");
 
 export async function explainSignal({
   data,
@@ -17,11 +17,21 @@ export async function explainSignal({
     const res = await fetch(`${BASE}/insight/${encodeURIComponent(data.ticker)}`, {
       method: "GET",
       headers: {
+        Authorization: `Basic ${credentials}`,
         "ngrok-skip-browser-warning": "true",
-        Authorization: BASIC_AUTH,
+        "Content-Type": "application/json",
       },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      let errorMsg = `HTTP ${res.status}`;
+      try {
+        const errJson = await res.json();
+        errorMsg = errJson?.error || JSON.stringify(errJson);
+      } catch {
+        // non-JSON response (e.g. HTML error page)
+      }
+      throw new Error(errorMsg);
+    }
     const json = await res.json();
     return { explanation: json?.insight ?? "", error: json?.error ?? null };
   } catch (e) {
