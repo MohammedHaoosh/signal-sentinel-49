@@ -485,7 +485,13 @@ function Dashboard() {
       }
       if (opts?.showSpinner) setChartLoading(true);
       try {
-        const r = await fetch(url, { headers: { "ngrok-skip-browser-warning": "true" } });
+        const credentials = btoa("iron-condor:Xk9#mP2$vL7qN4wR");
+        const r = await fetch(url, {
+          headers: {
+            Authorization: `Basic ${credentials}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const json = (await r.json()) as {
           candles?: Array<{
