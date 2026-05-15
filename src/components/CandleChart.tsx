@@ -1,5 +1,12 @@
 import { useEffect, useRef } from "react";
-import { createChart, CandlestickSeries, HistogramSeries, type IChartApi } from "lightweight-charts";
+import {
+  createChart,
+  CandlestickSeries,
+  HistogramSeries,
+  createSeriesMarkers,
+  type IChartApi,
+  type Time,
+} from "lightweight-charts";
 
 export interface Candle {
   time: number; // unix seconds
@@ -10,12 +17,21 @@ export interface Candle {
   volume: number;
 }
 
+export interface ChartMarker {
+  time: number; // unix seconds
+  price: number;
+  direction: string; // "BUY" | "SELL"
+  quantity: number;
+  allocated_usd: number;
+}
+
 interface Props {
   ticker: string;
   price: number;
   ma20: number;
   ma50: number;
   candles?: Candle[];
+  markers?: ChartMarker[];
   loading?: boolean;
 }
 
@@ -54,8 +70,10 @@ function buildCandles(seed: number, price: number, ma20: number, ma50: number): 
   return out;
 }
 
-export default function CandleChart({ ticker, price, ma20, ma50, candles, loading }: Props) {
+export default function CandleChart({ ticker, price, ma20, ma50, candles, markers, loading }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
   useEffect(() => {
@@ -105,7 +123,7 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, loadin
     });
     candleSeries.setData(
       clean.map((c) => ({
-        time: c.time as unknown as import("lightweight-charts").Time,
+        time: c.time as unknown as Time,
         open: c.open,
         high: c.high,
         low: c.low,
@@ -123,11 +141,59 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, loadin
     });
     volSeries.setData(
       clean.map((c) => ({
-        time: c.time as unknown as import("lightweight-charts").Time,
+        time: c.time as unknown as Time,
         value: c.volume,
         color: c.close >= c.open ? "rgba(52,211,153,0.5)" : "rgba(251,113,133,0.5)",
       })),
     );
+
+    // Render entry-point markers (BUY/SELL dots)
+    const validMarkers = (markers ?? []).filter(
+      (m) => Number.isFinite(m.time) && Number.isFinite(m.price),
+    );
+    if (validMarkers.length > 0) {
+      createSeriesMarkers(
+        candleSeries,
+        validMarkers.map((m) => {
+          const isBuy = (m.direction || "").toUpperCase() === "BUY";
+          return {
+            time: m.time as unknown as Time,
+            position: isBuy ? "belowBar" : "aboveBar",
+            color: isBuy ? "#22c55e" : "#fb7185",
+            shape: isBuy ? "arrowUp" : "arrowDown",
+            text: `${isBuy ? "BUY" : "SELL"} · $${Number(m.allocated_usd).toFixed(2)}`,
+          };
+        }),
+      );
+    }
+
+    // Hover tooltip for markers
+    const tooltipEl = tooltipRef.current;
+    const markerByTime = new Map<number, ChartMarker>();
+    for (const m of validMarkers) markerByTime.set(m.time, m);
+
+    const onMove = (param: Parameters<Parameters<typeof chart.subscribeCrosshairMove>[0]>[0]) => {
+      if (!tooltipEl || !wrapRef.current) return;
+      const t = param.time as unknown as number | undefined;
+      const m = t != null ? markerByTime.get(t) : undefined;
+      if (!m || !param.point) {
+        tooltipEl.style.display = "none";
+        return;
+      }
+      const isBuy = (m.direction || "").toUpperCase() === "BUY";
+      tooltipEl.innerHTML = `
+        <div style="font-weight:600;color:${isBuy ? "#22c55e" : "#fb7185"}">${m.direction}</div>
+        <div>Price: $${Number(m.price).toFixed(2)}</div>
+        <div>Qty: ${m.quantity}</div>
+        <div>Allocated: $${Number(m.allocated_usd).toFixed(2)}</div>
+      `;
+      tooltipEl.style.display = "block";
+      const w = wrapRef.current.clientWidth;
+      const left = Math.min(Math.max(param.point.x + 12, 8), w - 160);
+      tooltipEl.style.left = `${left}px`;
+      tooltipEl.style.top = `${Math.max(param.point.y - 8, 8)}px`;
+    };
+    chart.subscribeCrosshairMove(onMove);
 
     chart.timeScale().fitContent();
 
@@ -140,14 +206,20 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, loadin
 
     return () => {
       ro.disconnect();
+      chart.unsubscribeCrosshairMove(onMove);
       chart.remove();
       chartRef.current = null;
     };
-  }, [ticker, price, ma20, ma50, candles]);
+  }, [ticker, price, ma20, ma50, candles, markers]);
 
   return (
-    <div className="relative w-full">
+    <div ref={wrapRef} className="relative w-full">
       <div ref={containerRef} className="w-full" />
+      <div
+        ref={tooltipRef}
+        className="pointer-events-none absolute z-10 hidden rounded-md border border-zinc-700 bg-zinc-900/95 px-2 py-1.5 text-xs font-mono text-zinc-200 shadow-lg"
+        style={{ display: "none" }}
+      />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-zinc-200" />

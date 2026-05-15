@@ -324,6 +324,7 @@ function Dashboard() {
   const [featuredTicker, setFeaturedTicker] = useState<string>("AAPL");
   const [timeframe, setTimeframe] = useState<"15m" | "1h" | "1d">("15m");
   const [chartCandles, setChartCandles] = useState<import("@/components/CandleChart").Candle[]>([]);
+  const [chartMarkers, setChartMarkers] = useState<import("@/components/CandleChart").ChartMarker[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [signalsTick, setSignalsTick] = useState(0);
   const [insight, setInsight] = useState<string | null>(null);
@@ -477,15 +478,25 @@ function Dashboard() {
           { headers: { "ngrok-skip-browser-warning": "true" } },
         );
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const raw = (await r.json()) as Array<{
-          datetime: string;
-          open: number;
-          high: number;
-          low: number;
-          close: number;
-          volume: number;
-        }>;
-        const candles = (Array.isArray(raw) ? raw : [])
+        const json = (await r.json()) as {
+          candles?: Array<{
+            datetime: string;
+            open: number;
+            high: number;
+            low: number;
+            close: number;
+            volume: number;
+          }>;
+          markers?: Array<{
+            time: string | number;
+            price: number;
+            direction: string;
+            quantity: number;
+            allocated_usd: number;
+          }>;
+        };
+        const rawCandles = Array.isArray(json?.candles) ? json.candles : [];
+        const candles = rawCandles
           .map((c) => ({
             time: Math.floor(new Date(c.datetime).getTime() / 1000),
             open: Number(c.open),
@@ -495,9 +506,26 @@ function Dashboard() {
             volume: Number(c.volume) || 0,
           }))
           .filter((c) => Number.isFinite(c.time) && Number.isFinite(c.close));
+        const rawMarkers = Array.isArray(json?.markers) ? json.markers : [];
+        const mks = rawMarkers
+          .map((m) => ({
+            time:
+              typeof m.time === "number"
+                ? Math.floor(m.time)
+                : Math.floor(new Date(m.time).getTime() / 1000),
+            price: Number(m.price),
+            direction: String(m.direction || "BUY"),
+            quantity: Number(m.quantity) || 0,
+            allocated_usd: Number(m.allocated_usd) || 0,
+          }))
+          .filter((m) => Number.isFinite(m.time) && Number.isFinite(m.price));
         setChartCandles(candles);
+        setChartMarkers(mks);
       } catch {
-        if (opts?.showSpinner) setChartCandles([]);
+        if (opts?.showSpinner) {
+          setChartCandles([]);
+          setChartMarkers([]);
+        }
       } finally {
         if (opts?.showSpinner) setChartLoading(false);
       }
@@ -1060,6 +1088,7 @@ function Dashboard() {
                       ma20={fs.ma20}
                       ma50={fs.ma50}
                       candles={chartCandles}
+                      markers={chartMarkers}
                       loading={chartLoading}
                     />
                   </div>
