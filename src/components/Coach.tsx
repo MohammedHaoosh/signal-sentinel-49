@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/server-fn-shim";
 import { askCoach } from "@/lib/coach.functions";
 import { Send, Sparkles } from "lucide-react";
 
