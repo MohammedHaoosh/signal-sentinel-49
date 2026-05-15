@@ -1,4 +1,5 @@
 const BASE = "https://iron-condor.duckdns.org";
+const BASIC_AUTH = "Basic " + btoa("iron-condor:Xk9#mP2$vL7qN4wR");
 
 export async function explainSignal({
   data,
@@ -13,14 +14,16 @@ export async function explainSignal({
   };
 }): Promise<{ explanation: string; error: string | null }> {
   try {
-    const res = await fetch(`${BASE}/ai/explain`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
-      body: JSON.stringify(data),
+    const res = await fetch(`${BASE}/insight/${encodeURIComponent(data.ticker)}`, {
+      method: "GET",
+      headers: {
+        "ngrok-skip-browser-warning": "true",
+        Authorization: BASIC_AUTH,
+      },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    return { explanation: json?.explanation ?? "", error: json?.error ?? null };
+    return { explanation: json?.insight ?? "", error: json?.error ?? null };
   } catch (e) {
     return { explanation: "", error: e instanceof Error ? e.message : "Failed" };
   }
