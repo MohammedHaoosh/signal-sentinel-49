@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/lib/server-fn-shim";
 import confetti from "canvas-confetti";
 import {
   Dialog,
