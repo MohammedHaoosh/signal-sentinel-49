@@ -71,7 +71,7 @@ function buildCandles(seed: number, price: number, ma20: number, ma50: number): 
   return out;
 }
 
-export default function CandleChart({ ticker, price, ma20, ma50, candles, markers, loading }: Props) {
+export default function CandleChart({ ticker, price, ma20, ma50, candles, markers, loading, timeframe }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
