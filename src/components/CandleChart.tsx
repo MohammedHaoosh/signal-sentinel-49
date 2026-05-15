@@ -198,16 +198,19 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
     chart.subscribeCrosshairMove(onMove);
 
     requestAnimationFrame(() => {
-      if (timeframe === "1d?range=max") {
-        chart.timeScale().fitContent();
-      } else if (timeframe === "1d?range=1y") {
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (timeframe === "1d?range=1y" && clean.length > 0) {
+        // Series uses numeric unix-second timestamps, so setVisibleRange must
+        // also be numeric — passing date strings here is a silent no-op.
+        const nowSec = Math.floor(Date.now() / 1000);
+        const oneYearAgoSec = nowSec - 365 * 24 * 3600;
+        const dataMin = clean[0].time;
+        const dataMax = clean[clean.length - 1].time;
         chart.timeScale().setVisibleRange({
-          from: oneYearAgo.toISOString().split("T")[0] as unknown as Time,
-          to: new Date().toISOString().split("T")[0] as unknown as Time,
+          from: Math.max(oneYearAgoSec, dataMin) as unknown as Time,
+          to: Math.min(nowSec, dataMax) as unknown as Time,
         });
       } else {
+        // 15m and 1d?range=max: just show everything we loaded.
         chart.timeScale().fitContent();
       }
     });
