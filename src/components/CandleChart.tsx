@@ -156,12 +156,13 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
         candleSeries,
         validMarkers.map((m) => {
           const isBuy = (m.direction || "").toUpperCase() === "BUY";
+          const dollars = Number(m.allocated_usd);
           return {
             time: m.time as unknown as Time,
-            position: isBuy ? "belowBar" : "aboveBar",
-            color: isBuy ? "#22c55e" : "#fb7185",
-            shape: isBuy ? "arrowUp" : "arrowDown",
-            text: `${isBuy ? "BUY" : "SELL"} · $${Number(m.allocated_usd).toFixed(2)}`,
+            position: "belowBar" as const,
+            color: isBuy ? "#26a69a" : "#ef5350",
+            shape: "circle" as const,
+            text: `${isBuy ? "BUY" : "SELL"} $${dollars.toFixed(0)}`,
           };
         }),
       );
