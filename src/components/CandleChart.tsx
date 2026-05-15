@@ -33,6 +33,7 @@ interface Props {
   candles?: Candle[];
   markers?: ChartMarker[];
   loading?: boolean;
+  timeframe?: string;
 }
 
 // Synthesize a deterministic 30-bar OHLC series anchored on the snapshot values.
@@ -70,7 +71,7 @@ function buildCandles(seed: number, price: number, ma20: number, ma50: number): 
   return out;
 }
 
-export default function CandleChart({ ticker, price, ma20, ma50, candles, markers, loading }: Props) {
+export default function CandleChart({ ticker, price, ma20, ma50, candles, markers, loading, timeframe }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -197,7 +198,18 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
     chart.subscribeCrosshairMove(onMove);
 
     requestAnimationFrame(() => {
-      chart.timeScale().fitContent();
+      if (timeframe === "1d?range=max") {
+        chart.timeScale().fitContent();
+      } else if (timeframe === "1d?range=1y") {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        chart.timeScale().setVisibleRange({
+          from: oneYearAgo.toISOString().split("T")[0] as unknown as Time,
+          to: new Date().toISOString().split("T")[0] as unknown as Time,
+        });
+      } else {
+        chart.timeScale().fitContent();
+      }
     });
 
     const ro = new ResizeObserver(() => {
@@ -213,7 +225,7 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
       chart.remove();
       chartRef.current = null;
     };
-  }, [ticker, price, ma20, ma50, candles, markers]);
+  }, [ticker, price, ma20, ma50, candles, markers, timeframe]);
 
   return (
     <div ref={wrapRef} className="relative w-full">

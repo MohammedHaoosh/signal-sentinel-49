@@ -1103,6 +1103,13 @@ function Dashboard() {
                       candles={chartCandles}
                       markers={chartMarkers}
                       loading={chartLoading}
+                      timeframe={
+                        timeframe === "15m"
+                          ? "15m"
+                          : timeframe === "1h"
+                            ? "1d?range=1y"
+                            : "1d?range=max"
+                      }
                     />
                   </div>
                   <LiveTicks stocks={stocks} />
