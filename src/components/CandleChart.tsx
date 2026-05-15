@@ -196,7 +196,9 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
     };
     chart.subscribeCrosshairMove(onMove);
 
-    chart.timeScale().fitContent();
+    requestAnimationFrame(() => {
+      chart.timeScale().fitContent();
+    });
 
     const ro = new ResizeObserver(() => {
       if (containerRef.current && chartRef.current) {
