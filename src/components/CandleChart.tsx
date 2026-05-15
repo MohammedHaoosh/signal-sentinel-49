@@ -225,7 +225,7 @@ export default function CandleChart({ ticker, price, ma20, ma50, candles, marker
       chart.remove();
       chartRef.current = null;
     };
-  }, [ticker, price, ma20, ma50, candles, markers]);
+  }, [ticker, price, ma20, ma50, candles, markers, timeframe]);
 
   return (
     <div ref={wrapRef} className="relative w-full">
