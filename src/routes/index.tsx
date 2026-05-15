@@ -470,13 +470,22 @@ function Dashboard() {
   const fetchChartCandles = useCallback(
     async (opts?: { showSpinner?: boolean }) => {
       if (!featuredTicker) return;
-      const tfPath = timeframe === "1h" ? "1h" : timeframe === "1d" ? "1d" : "15m";
+      // Map timeframe button → endpoint path + optional range query.
+      // "15m" → /chart/{t}/15m
+      // "1h"  → /chart/{t}/1d?range=1y   (Daily 1Y)
+      // "1d"  → /chart/{t}/1d?range=max  (Daily Max)
+      let url: string;
+      const t = encodeURIComponent(featuredTicker);
+      if (timeframe === "15m") {
+        url = `https://iron-condor.duckdns.org/chart/${t}/15m`;
+      } else if (timeframe === "1h") {
+        url = `https://iron-condor.duckdns.org/chart/${t}/1d?range=1y`;
+      } else {
+        url = `https://iron-condor.duckdns.org/chart/${t}/1d?range=max`;
+      }
       if (opts?.showSpinner) setChartLoading(true);
       try {
-        const r = await fetch(
-          `https://iron-condor.duckdns.org/chart/${encodeURIComponent(featuredTicker)}/${tfPath}`,
-          { headers: { "ngrok-skip-browser-warning": "true" } },
-        );
+        const r = await fetch(url, { headers: { "ngrok-skip-browser-warning": "true" } });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const json = (await r.json()) as {
           candles?: Array<{
