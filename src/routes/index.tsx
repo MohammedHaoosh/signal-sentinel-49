@@ -1088,6 +1088,7 @@ function Dashboard() {
                       ma20={fs.ma20}
                       ma50={fs.ma50}
                       candles={chartCandles}
+                      markers={chartMarkers}
                       loading={chartLoading}
                     />
                   </div>
